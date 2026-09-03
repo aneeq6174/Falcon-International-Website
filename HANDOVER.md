@@ -38,38 +38,58 @@ production build, not assumed.
 
 ## What has to happen before launch
 
-Three of these need the client, not a developer.
+Three of these need the client, not a developer. The form is already live.
 
-### 1. Add the SMTP credentials — BLOCKING
+### 1. The contact form — DONE, but know how to fix it
 
-The contact form posts to `/api/contact`, which sends the enquiry through **your
-own** `business@falconinternational.net.pk` mailbox. No form service, no third
-party holding your leads.
+Live and delivering to `business@falconinternational.net.pk` via **Zoho Mail**
+over SMTP. No form service, no third party holding the leads. Replies work
+naturally: the mail arrives from the site but `Reply-To` is the enquirer, so
+hitting reply in the inbox goes straight to them.
 
-It needs four values. Set them in **Vercel → Project → Settings → Environment
-Variables** (and in a local `.env` if you want to test):
+Configured in **Vercel → Settings → Environment Variables**:
 
-| Variable | Example |
+| Variable | Value |
 |---|---|
-| `SMTP_HOST` | `mail.falconinternational.net.pk` |
-| `SMTP_PORT` | `587` (or `465`) |
+| `SMTP_HOST` | `smtp.zoho.com` — follows the Zoho data centre (`.eu`, `.in`) |
+| `SMTP_PORT` | `465` |
 | `SMTP_USER` | `business@falconinternational.net.pk` |
-| `SMTP_PASS` | the mailbox password |
+| `SMTP_PASS` | a Zoho **app password**, not the account login password |
 
-Get them from whoever hosts the email — in cPanel it's **Email Accounts →
-Connect Devices**; on Google Workspace or Microsoft 365 it's in their SMTP docs.
-`.env.example` in the repo is the template. **Never commit real values** — `.env`
-is gitignored.
+Two things that will otherwise cost an afternoon:
 
-Until they are set the endpoint returns `503`, and the form quietly falls back to
-composing the enquiry in the visitor's own mail app, addressed to you. So it is
-never a dead control — but leads will be less reliable until this is done.
+- **Zoho refuses SMTP with the login password** when 2FA is on. It needs an app
+  password from *Zoho → My Account → Security → App Passwords*. Rotating the
+  Zoho password does not invalidate it; deleting it there does.
+- **Vercel attaches environment variables at build time.** Editing a value
+  changes nothing until you *redeploy*. This is the single most likely reason a
+  working form stops working.
 
-Replies work naturally: the email arrives from the site but `Reply-To` is the
-enquirer, so hitting reply in your inbox goes straight to them.
+**Diagnosing it: open `/api/contact/` in a browser.** It reports whether each
+variable is present — names only, never values, so it is safe on a public URL:
 
-**Test it after deploying:** submit the form on the live site and confirm the
-email arrives. That is the one check worth doing by hand.
+```json
+{"configured":true,"hasHost":true,"hasUser":true,"hasPass":true,
+ "port":"465","smtpKeysPresent":["SMTP_HOST",…],"vercelEnv":"production"}
+```
+
+- `configured: false` with `smtpKeysPresent: []` → not attached to this
+  deployment. Wrong Environment, or it was built before the variables existed.
+- `configured: false` but the keys **are** listed → they exist with blank
+  values. This actually happened; Vercel masks values, so it looks identical to
+  a correct setup.
+- `configured: true` but sending fails → the browser console prints nodemailer's
+  error code. `EAUTH` is a rejected password (Zoho's free plan blocks SMTP
+  entirely — Mail Lite is the cheapest fix); `ECONNECTION`/`ETIMEDOUT` is the
+  wrong host or port.
+
+There is deliberately **no `mailto:` fallback**. An earlier version opened the
+visitor's mail app when the endpoint failed, which turned a misconfiguration into
+a baffling "choose an application" dialog. It now says it failed and points at
+WhatsApp.
+
+`.env.example` is the template. **Never commit real values** — `.env` is
+gitignored.
 
 ### 2. Client logo artwork
 
