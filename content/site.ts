@@ -666,14 +666,8 @@ export const contact = {
     sent: 'Sent',
     sentNote: 'Thank you — your enquiry is with us. We reply within one working day.',
     note: 'We reply to project enquiries within one working day.',
-    /**
-     * The enquiry is delivered by composing an email in the sender's own mail
-     * app — see the mailto note in S13Contact. This is the subject line and the
-     * fallback shown if their device has no mail client configured.
-     */
-    mailSubject: 'Project enquiry',
-    noMailClient:
-      'Your device has no email app set up. Please WhatsApp us or email business@falconinternational.net.pk directly.',
+    /** Shown if the send fails. Never opens a mail app on its own. */
+    failed: "Sorry — we couldn't send that just now. Please reach us on",
   },
   footer: {
     line1: 'FALCON INTERNATIONAL — Your Industrial Contracting Partner',

@@ -24,13 +24,11 @@
  * over SMTP. No form service, no third party holding the data. The visitor gets
  * a real confirmation and never leaves the page.
  *
- * If that endpoint is missing or unconfigured — a static build, or SMTP env vars
- * not set yet — the form FALLS BACK to composing the same enquiry in the
- * visitor's own mail app, addressed to the business address. So the form is
- * never a dead control, whatever the deployment looks like.
- *
- * The WhatsApp route sits beside it either way, and is likely the channel most
- * enquirers actually use.
+ * There is deliberately NO mailto fallback anywhere in this form — not on
+ * failure, not as a no-JS action. Handing the fields to the visitor's mail app
+ * surfaces a misconfiguration as a confusing "choose an application" dialog, and
+ * an enquiry the business never receives. If the send fails, the form says so and
+ * points at WhatsApp and the address, both of which are on the page anyway.
  */
 
 import { useCallback, useRef, useState } from 'react';
@@ -60,54 +58,37 @@ export function S13Contact() {
 
   const formRef = useRef<HTMLFormElement>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
-  /** Set when we fell back to the visitor's mail app and nothing happened. */
-  const [mailStalled, setMailStalled] = useState(false);
+  /** The server's `reason`, surfaced to the console for diagnosis. */
+  const [failure, setFailure] = useState<string>('');
 
-  /** Compose the enquiry in the visitor's own mail app. The fallback path. */
-  const openMailClient = useCallback(
-    (data: FormData) => {
-      const value = (k: string) => String(data.get(k) ?? '').trim();
-      const lines = [
-        `Name: ${value('name')}`,
-        `Company: ${value('company')}`,
-        `Email: ${value('email')}`,
-        `Phone: ${value('phone') || '—'}`,
-        `Service required: ${value('service')}`,
-        '',
-        'Message:',
-        value('message'),
-      ];
-      const subject = `${form.mailSubject} — ${value('company') || value('name')}`;
-      const href =
-        `mailto:${org.emails[0]}` +
-        `?subject=${encodeURIComponent(subject)}` +
-        `&body=${encodeURIComponent(lines.join('\n'))}`;
-
-      // If the tab still has focus a moment later, no mail app took the link.
-      const stalled = window.setTimeout(() => setMailStalled(true), 1200);
-      const cancel = () => window.clearTimeout(stalled);
-      window.addEventListener('blur', cancel, { once: true });
-      window.addEventListener('pagehide', cancel, { once: true });
-
-      window.location.href = href;
-    },
-    [form.mailSubject],
-  );
-
+  /**
+   * Submits to /api/contact, which sends through the company's own mailbox.
+   *
+   * There is deliberately NO automatic mailto fallback. An earlier version opened
+   * the visitor's mail app whenever the endpoint failed, which meant a
+   * misconfiguration surfaced as a confusing "choose an application" dialog
+   * instead of an error anyone could act on. If sending fails the form says so
+   * and points at WhatsApp — the channel that always works.
+   *
+   * The failure `reason` is logged to the console so a misconfiguration can be
+   * diagnosed from the browser without reading server logs.
+   */
   const onSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       const el = formRef.current;
       if (!el || status === 'sending') return;
 
-      const data = new FormData(el);
-      setMailStalled(false);
+      setFailure('');
       setStatus('sending');
 
       try {
         // Trailing slash deliberately: `trailingSlash: true` in next.config
         // would otherwise 308-redirect this POST on every submission.
-        const response = await fetch('/api/contact/', { method: 'POST', body: data });
+        const response = await fetch('/api/contact/', {
+          method: 'POST',
+          body: new FormData(el),
+        });
 
         if (response.ok) {
           setStatus('sent');
@@ -115,18 +96,25 @@ export function S13Contact() {
           return;
         }
 
-        // 503 means the endpoint exists but has no SMTP configured yet. Anything
-        // else server-side is still better handled by letting them send it
-        // themselves than by showing a dead end.
-        setStatus('idle');
-        openMailClient(data);
-      } catch {
-        // No endpoint at all (static build) or the network failed.
-        setStatus('idle');
-        openMailClient(data);
+        const reason = await response
+          .json()
+          .then((body: { reason?: string }) => body?.reason ?? String(response.status))
+          .catch(() => String(response.status));
+
+        console.error(
+          `[contact] send failed — HTTP ${response.status}, reason: ${reason}. ` +
+            'If this says "unconfigured", the SMTP environment variables are not ' +
+            'reaching the function — redeploy after setting them.',
+        );
+        setFailure(reason);
+        setStatus('error');
+      } catch (error) {
+        console.error('[contact] request failed:', error);
+        setFailure('network');
+        setStatus('error');
       }
     },
-    [openMailClient, status],
+    [status],
   );
 
   const rootRef = useScrollScene<HTMLElement>(
@@ -289,10 +277,6 @@ export function S13Contact() {
           <form
             ref={formRef}
             onSubmit={onSubmit}
-            /* No-JS fallback: the browser still hands the fields to a mail app. */
-            action={`mailto:${org.emails[0]}`}
-            method="post"
-            encType="text/plain"
             className="flex flex-col gap-4"
           >
             <fieldset className="flex flex-col gap-4 border-0 p-0">
@@ -415,8 +399,24 @@ export function S13Contact() {
             <p aria-live="polite" className="text-xs leading-relaxed">
               {status === 'sent' ? (
                 <span className="text-white">{form.sentNote}</span>
-              ) : mailStalled ? (
-                <span className="text-red">{form.noMailClient}</span>
+              ) : status === 'error' ? (
+                <span className="text-red">
+                  {form.failed}{' '}
+                  <a
+                    href={`https://wa.me/${org.whatsapp}?text=${encodeURIComponent(whatsapp.message)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline underline-offset-4"
+                  >
+                    {whatsapp.label}
+                  </a>
+                  {' · '}
+                  <a href={`mailto:${org.emails[0]}`} className="underline underline-offset-4">
+                    {org.emails[0]}
+                  </a>
+                  {/* Only visible to whoever is debugging; never to a visitor. */}
+                  <span className="sr-only">{failure}</span>
+                </span>
               ) : (
                 <span className="sr-only" />
               )}
