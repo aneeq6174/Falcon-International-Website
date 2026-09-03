@@ -5,3 +5,9 @@ next-env.d.ts
 *.tsbuildinfo
 .DS_Store
 .env*.local
+
+# Real credentials. `.env*.local` alone does NOT cover a plain `.env`, which is
+# the filename Next.js documents first and the one people actually create.
+.env
+.env.*
+!.env.example

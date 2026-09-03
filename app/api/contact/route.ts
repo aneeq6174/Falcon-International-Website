@@ -26,6 +26,21 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
+ * Reads an environment variable defensively.
+ *
+ * A value pasted into a hosting dashboard routinely arrives with a trailing
+ * space or wrapped in the quotes it was copied with — `"mail.example.com"`
+ * rather than `mail.example.com`. Either one makes the connection fail with an
+ * error that points nowhere near the real cause, so both are stripped here.
+ *
+ * An empty or whitespace-only value is treated as absent, which is what the
+ * person who left the field blank meant.
+ */
+function env(name: string): string {
+  return (process.env[name] ?? '').trim().replace(/^["']|["']$/g, '').trim();
+}
+
+/**
  * Health check. Visit /api/contact/ in a browser to see whether the SMTP
  * variables actually reached this function.
  *
@@ -35,13 +50,28 @@ export const dynamic = 'force-dynamic';
  * baked in at build time, so a redeploy is required.
  */
 export async function GET() {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
   return NextResponse.json({
-    configured: Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS),
-    hasHost: Boolean(SMTP_HOST),
-    hasUser: Boolean(SMTP_USER),
-    hasPass: Boolean(SMTP_PASS),
-    port: SMTP_PORT ?? '587 (default)',
+    configured: Boolean(env('SMTP_HOST') && env('SMTP_USER') && env('SMTP_PASS')),
+    hasHost: Boolean(env('SMTP_HOST')),
+    hasUser: Boolean(env('SMTP_USER')),
+    hasPass: Boolean(env('SMTP_PASS')),
+    port: env('SMTP_PORT') || '(unset — will default to 587)',
+
+    // Which SMTP keys exist in the running function's environment at all. Only
+    // NAMES, never values — and these names are already public in .env.example.
+    //
+    // This separates the two failure modes that otherwise look identical:
+    //   []                  the variables are not attached to this deployment —
+    //                       wrong Environment (Preview vs Production), or the
+    //                       deployment was built before they were added
+    //   [...] but empty     the variables exist with blank values
+    smtpKeysPresent: Object.keys(process.env)
+      .filter((k) => k.startsWith('SMTP_') || k === 'CONTACT_TO')
+      .sort(),
+
+    // Proof that Vercel's own variables reach this function. If this is null,
+    // nothing is being injected and the problem is not your SMTP entries.
+    vercelEnv: process.env.VERCEL_ENV ?? null,
   });
 }
 
@@ -54,7 +84,11 @@ function clean(value: FormDataEntryValue | null, max: number): string {
 }
 
 export async function POST(request: Request) {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, CONTACT_TO } = process.env;
+  const SMTP_HOST = env('SMTP_HOST');
+  const SMTP_PORT = env('SMTP_PORT');
+  const SMTP_USER = env('SMTP_USER');
+  const SMTP_PASS = env('SMTP_PASS');
+  const CONTACT_TO = env('CONTACT_TO');
 
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
     // Deliberately vague to the client, explicit in the server log. The form
@@ -91,7 +125,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, reason: 'incomplete' }, { status: 400 });
   }
 
-  const port = Number(SMTP_PORT ?? 587);
+  // Number('') is 0, not NaN, so an unset port would silently become port 0.
+  const port = Number(SMTP_PORT) || 587;
 
   const transport = nodemailer.createTransport({
     host: SMTP_HOST,
