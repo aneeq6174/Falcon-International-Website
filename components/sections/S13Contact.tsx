@@ -96,15 +96,23 @@ export function S13Contact() {
           return;
         }
 
-        const reason = await response
+        const { reason, code } = await response
           .json()
-          .then((body: { reason?: string }) => body?.reason ?? String(response.status))
-          .catch(() => String(response.status));
+          .then((body: { reason?: string; code?: string }) => ({
+            reason: body?.reason ?? String(response.status),
+            code: body?.code,
+          }))
+          .catch(() => ({ reason: String(response.status), code: undefined }));
 
         console.error(
-          `[contact] send failed — HTTP ${response.status}, reason: ${reason}. ` +
-            'If this says "unconfigured", the SMTP environment variables are not ' +
-            'reaching the function — redeploy after setting them.',
+          `[contact] send failed — HTTP ${response.status}, reason: ${reason}` +
+            `${code ? `, code: ${code}` : ''}\n` +
+            'unconfigured → the SMTP variables are not reaching the function; they are\n' +
+            '  baked in at build time, so redeploy after setting them.\n' +
+            'send-failed → the variables arrived but the mail server refused. Read the code:\n' +
+            '  EAUTH = wrong password (or the provider wants an App Password)\n' +
+            '  ECONNECTION / ETIMEDOUT / ESOCKET = wrong host or port, or the mail\n' +
+            '  server will not accept connections from outside its own network.',
         );
         setFailure(reason);
         setStatus('error');

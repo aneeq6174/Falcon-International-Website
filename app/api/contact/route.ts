@@ -25,6 +25,26 @@ import { org } from '@/content/site';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+/**
+ * Health check. Visit /api/contact/ in a browser to see whether the SMTP
+ * variables actually reached this function.
+ *
+ * Reports only whether each value is PRESENT — never the values themselves, so
+ * this is safe on a public endpoint. `configured: false` here means the
+ * variables were set in Vercel after the current deployment was built: they are
+ * baked in at build time, so a redeploy is required.
+ */
+export async function GET() {
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
+  return NextResponse.json({
+    configured: Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS),
+    hasHost: Boolean(SMTP_HOST),
+    hasUser: Boolean(SMTP_USER),
+    hasPass: Boolean(SMTP_PASS),
+    port: SMTP_PORT ?? '587 (default)',
+  });
+}
+
 /** Trimmed, length-capped, and stripped of header-injection characters. */
 function clean(value: FormDataEntryValue | null, max: number): string {
   return String(value ?? '')
@@ -79,6 +99,19 @@ export async function POST(request: Request) {
     // 465 is implicit TLS; 587 upgrades with STARTTLS.
     secure: port === 465,
     auth: { user: SMTP_USER, pass: SMTP_PASS },
+    // Shared cPanel mail servers very often present a certificate issued for the
+    // hosting box (e.g. server42.hostprovider.com) rather than for the mail
+    // domain, so the TLS name check fails and nodemailer aborts with
+    // ERR_TLS_CERT_ALTNAME_INVALID / SELF_SIGNED_CERT_IN_CHAIN. Setting
+    // SMTP_INSECURE_TLS=1 keeps the connection encrypted but stops verifying who
+    // is on the other end. Only use it when the host is the client's own mail
+    // server and the certificate mismatch has been confirmed as the cause.
+    ...(process.env.SMTP_INSECURE_TLS === '1'
+      ? { tls: { rejectUnauthorized: false } }
+      : {}),
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
 
   const lines = [
@@ -106,9 +139,24 @@ export async function POST(request: Request) {
       text: lines.join('\n'),
     });
   } catch (error) {
-    // Never surface SMTP internals to the browser.
-    console.error('[contact] SMTP send failed:', error instanceof Error ? error.message : error);
-    return NextResponse.json({ ok: false, reason: 'send-failed' }, { status: 502 });
+    // The full error goes to the server log only. The browser gets nodemailer's
+    // short error CODE — never the message, which can echo the host, the
+    // username, or the server's rejection text back to a stranger.
+    //
+    // The code is what identifies the fault:
+    //   EAUTH      credentials rejected — wrong password, or the provider wants
+    //              an App Password rather than the mailbox password
+    //   ECONNECTION / ETIMEDOUT / ESOCKET
+    //              could not reach the host — wrong host or port, or the mail
+    //              server refuses connections from outside its own network
+    //   ESOCKET with a certificate reason — TLS name mismatch, see SMTP_INSECURE_TLS
+    //   EENVELOPE  the host refused the from/to addresses
+    console.error('[contact] SMTP send failed:', error);
+    const code =
+      typeof error === 'object' && error !== null && 'code' in error
+        ? String((error as { code: unknown }).code).slice(0, 40)
+        : 'unknown';
+    return NextResponse.json({ ok: false, reason: 'send-failed', code }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true });
