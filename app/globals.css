@@ -1,0 +1,281 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ */
+/* Brand tokens — extracted from the client's profile deck.            */
+/* Red is structural: the line, key numerals, rules and CTAs. Nothing  */
+/* else. Do not introduce alternatives.                                */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --navy: #1b2a4a;
+  --red: #e23327;
+  --ink: #221f1f;
+  --grey: #5e5f5f;
+  --paper: #f3f4f3;
+  --white: #ffffff;
+
+  /* Viewport unit that survives mobile browser chrome. Never use bare 100vh. */
+  --vh: 100vh;
+}
+
+@supports (height: 100dvh) {
+  :root {
+    --vh: 100dvh;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: auto; /* Lenis owns scrolling; never both. */
+  }
+
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body), system-ui, sans-serif;
+    font-feature-settings: 'kern' 1;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /*
+     * clip, not hidden. `overflow-x: hidden` makes body a scroll container,
+     * which breaks the position:fixed ScrollTrigger relies on to pin a section —
+     * pinned sections detach and the page tears. `clip` suppresses the same
+     * horizontal overflow without creating a scroll container.
+     */
+    overflow-x: clip;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), system-ui, sans-serif;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  /**
+   * The `hidden` attribute must actually hide.
+   *
+   * The UA rule is `[hidden] { display: none }`, which ANY author display
+   * declaration beats — including a Tailwind `grid` or `flex` class on the same
+   * element. S10's filtered-out project rows carry both, and without this they
+   * stayed on screen while the DOM insisted they were hidden.
+   */
+  [hidden] {
+    display: none !important;
+  }
+
+  /* Stats must not jitter while counting. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  /* Visible focus rings are required — brief §6. */
+  :focus-visible {
+    outline: 2px solid var(--red);
+    outline-offset: 3px;
+    border-radius: 1px;
+  }
+
+  ::selection {
+    background: var(--red);
+    color: var(--white);
+  }
+}
+
+@layer components {
+  /* Small uppercase navy label with wide tracking, exactly like the deck. */
+  .eyebrow {
+    @apply font-display text-eyebrow font-semibold uppercase;
+    letter-spacing: 0.22em;
+  }
+
+  /* Page shell. One gutter definition, used everywhere. */
+  .shell {
+    @apply mx-auto w-full max-w-shell px-6 md:px-10 lg:px-14;
+  }
+
+  /*
+   * A statistic's numeral, sized to its COLUMN rather than the viewport.
+   *
+   * The brief's `clamp(4rem, 12vw, 11rem)` is right for a numeral that owns the
+   * frame — S12's ZERO still uses it via `text-stat`. It is wrong inside a
+   * multi-column grid: the shell caps at 80rem, so past a 1280px viewport the
+   * columns stop growing while a vw-based font keeps growing. At 11rem, "450"
+   * is 295px wide in a 262px column and laps into its neighbour.
+   *
+   * Budgeted against the widest value the grid has to carry — "450+", four
+   * glyphs — at each column count: one up, two up (sm), four up (lg).
+   */
+  .stat-numeral {
+    font-size: clamp(3.5rem, 16vw, 7rem);
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    white-space: nowrap;
+  }
+
+  @media (min-width: 640px) {
+    .stat-numeral {
+      font-size: clamp(3rem, 10vw, 8rem);
+    }
+  }
+
+  /*
+   * Four up. THE BUDGET: above a 1280px viewport the shell is capped, so the
+   * column is fixed at ~262px and only the font would keep growing. At the 6rem
+   * ceiling the widest value the grid carries, "450+", measures ~219px — about
+   * 40px of headroom.
+   *
+   * A wider value (say "1,200+") will not fit. If one is ever added, lower this
+   * ceiling rather than letting it lap into the next column.
+   */
+  @media (min-width: 1024px) {
+    .stat-numeral {
+      font-size: clamp(2.5rem, 5.2vw, 6rem);
+    }
+  }
+
+  /*
+   * Secondary statistics — S4's regional counts, which sit stacked in a column
+   * beside the map rather than owning a four-up grid. At the primary scale three
+   * of them plus a heading and a footer overflow a pinned viewport and push the
+   * heading up under the fixed nav.
+   */
+  .stat-numeral-compact {
+    font-size: clamp(2.25rem, 7vw, 3.25rem);
+  }
+
+  @media (min-width: 1024px) {
+    .stat-numeral-compact {
+      font-size: clamp(2rem, 3vw, 3.5rem);
+    }
+  }
+
+  .rule {
+    @apply block h-px w-full border-0;
+    background-color: currentColor;
+    opacity: 0.16;
+  }
+
+  .rule-red {
+    @apply block h-0.5 w-16 border-0;
+    background-color: var(--red);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Pre-hydration resting state for scroll-drawn artwork.               */
+/*                                                                     */
+/* The timelines set these inline once they build, but that happens    */
+/* after hydration AND after an async measure pass — several frames in */
+/* which the artwork would paint fully drawn and then snap away.       */
+/* Declaring it in CSS makes the FIRST paint correct.                  */
+/*                                                                     */
+/* Scoped two ways, and both matter:                                   */
+/*   .js              — with JavaScript off nothing will ever draw     */
+/*                      these, so they must render complete rather     */
+/*                      than invisible.                                */
+/*   no-preference    — a reduced-motion reader gets the finished       */
+/*                      frame immediately, with no hide-then-reveal.   */
+/*                                                                     */
+/* The 100 below is DASH_UNITS in lib/redline.ts. Every element these  */
+/* rules touch declares pathLength="100", which is what makes 100 mean */
+/* "the whole path" instead of 100 user units. Change one, change all  */
+/* three.                                                              */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .js [data-draw],
+  .js [data-strand] {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+  }
+
+  .js [data-plant-fill],
+  .js [data-plant-glow] {
+    opacity: 0;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Preloader.                                                          */
+/*                                                                     */
+/* Hidden by default and shown only once the layout's inline script    */
+/* has added `.js`, so with JavaScript disabled it never appears.      */
+/* Never shown under reduced motion, and never on a repeat visit       */
+/* (`.preloaded`, set from sessionStorage before first paint).         */
+/*                                                                     */
+/* THE SAFETY NET: the keyframe below hides it at 2.5s with NO         */
+/* JavaScript involved. If the bundle fails to load, throws, or never  */
+/* hydrates, the overlay still goes away. A preloader that cannot      */
+/* dismiss is worse than no preloader — brief §5, "Never trap the      */
+/* user."                                                              */
+/* ------------------------------------------------------------------ */
+
+.preloader {
+  display: none;
+}
+
+/* Dev harness only: force the frame visible so it can be inspected. */
+.preloader[data-preview] {
+  display: flex !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .js:not(.preloaded) .preloader {
+    display: flex;
+    animation: preloader-failsafe 0s linear 2500ms forwards;
+  }
+}
+
+@keyframes preloader-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Reduced motion.                                                     */
+/*                                                                     */
+/* The static site is the fallback, and it must look intentional and   */
+/* complete rather than like the animated site with the motion torn    */
+/* out. Pinning, scrubbing and Lenis are all disabled in JS; this      */
+/* block catches anything CSS-driven.                                  */
+/* ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Set by SmoothScroll when Lenis is not running (touch or reduced motion). */
+.native-scroll {
+  scroll-behavior: auto;
+}
+
+/* Lenis requires these while it is active. */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
