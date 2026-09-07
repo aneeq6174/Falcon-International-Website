@@ -83,7 +83,7 @@ export const nav = {
    * summaries, since the page is what someone clicking the nav is after.
    */
   items: [
-    { label: 'Journey', href: '/#journey' },
+    { label: 'Journey', href: '/journey/' },
     { label: 'Capabilities', href: '/capabilities/' },
     { label: 'Clients', href: '/#clients' },
     { label: 'Our Projects', href: '/track-record/' },
@@ -185,6 +185,13 @@ export type Milestone = {
 export const journey = {
   eyebrow: 'THE JOURNEY',
   title: '1997 — 2026',
+  /** The home page carries selected milestones; the full timeline is /journey. */
+  summary:
+    'Twenty-nine years, from a specialist fabrication crew in Lahore to an approved vendor for Unilever, Lucky Core Industries and Habib Metro.',
+  cta: 'Walk the full timeline',
+  pageIntro:
+    'Every milestone from the first Lahore workshop in 1997 to today, in order. The pattern worth noticing is how often the same client names come back.',
+  highlightsLabel: 'Selected milestones',
   milestones: [
     {
       year: '1997',

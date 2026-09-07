@@ -155,6 +155,154 @@ export type LineSegment = {
 };
 
 /* ------------------------------------------------------------------ */
+/* S1 — where the line is born                                         */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The line is born at the base of the plant and descends toward S2.
+ *
+ * Its birth point was the fixed fraction 0.58, chosen against the hero as it
+ * looked at the time. The wordmark is `clamp(2.5rem, 8vw, 7rem)` and wraps to
+ * two lines on a narrow desktop, so on some widths 0.58 lands on the second
+ * line of "FALCON INTERNATIONAL" and the line appears to strike it through.
+ *
+ * Measuring the heading means the birth point tracks the type instead.
+ */
+export const heroStrands: StrandBuilder = ({ width, height, section, host }) => {
+  if (!section || width <= 0 || height <= 0) return [];
+
+  const heading = section.querySelector<HTMLElement>('h1');
+  if (!heading) return [];
+
+  const hostTop = host.getBoundingClientRect().top;
+  const headingBottom = (heading.getBoundingClientRect().bottom - hostTop) / height;
+
+  const birth = Math.min(0.9, Math.max(0.58, headingBottom + 0.02));
+  return [{ id: 'birth', nodes: [p(0.5, birth), p(0.5, 1)] }];
+};
+
+/* ------------------------------------------------------------------ */
+/* The gutter route — how the line gets past a section without         */
+/* being drawn across its words                                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * How far outside the content column the vertical run sits, as a fraction of
+ * the section width.
+ *
+ * `.shell` is capped at 80rem with 1.5-3.5rem of padding, so on every viewport
+ * at or above the 768px breakpoint the first character of text starts further
+ * in than this. Below 768px the mobile spine takes over and this is not used.
+ */
+const GUTTER_X = 0.03;
+
+/**
+ * Clearance kept between the line and the nearest text.
+ *
+ * It must be at least the corner radius. A horizontal run placed 14px above a
+ * heading still turns through a 32px arc, and that arc dips back down into the
+ * words — which is exactly how "OUR MISSION" was still being clipped after the
+ * straight runs had been moved clear of it. Expressed in pixels for that
+ * reason, then converted, so a short section is not given a proportionally
+ * smaller gap than a tall one.
+ */
+const TEXT_CLEARANCE_PX = CORNER_RADIUS + 10;
+
+/**
+ * The vertical band the section's TEXT actually occupies.
+ *
+ * Measured off text nodes rather than element boxes, because a block element is
+ * routinely much taller and wider than the words inside it — a heading in a
+ * full-width `<header>` reports a box spanning the whole column while the words
+ * stop a third of the way across. Routing against boxes therefore either
+ * refuses valid space or, worse, declares a crossing safe when it is not.
+ *
+ * Returns null when there is nothing to measure, which makes the caller fall
+ * back to the segment's declared spine.
+ */
+function textBand(section: HTMLElement, host: HTMLElement, height: number): { top: number; bottom: number } | null {
+  const hostTop = host.getBoundingClientRect().top;
+  let top = Infinity;
+  let bottom = -Infinity;
+
+  const walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT);
+  let node: Node | null;
+  while ((node = walker.nextNode())) {
+    if (!node.nodeValue || !node.nodeValue.trim()) continue;
+    const parent = node.parentElement;
+    if (!parent) continue;
+
+    const cs = getComputedStyle(parent);
+    if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) < 0.05) continue;
+    // Screen-reader-only text is not painted, so it cannot be crossed.
+    if (parent.closest('.sr-only')) continue;
+
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    for (const rect of Array.from(range.getClientRects())) {
+      if (rect.width < 1 || rect.height < 1) continue;
+      top = Math.min(top, rect.top - hostTop);
+      bottom = Math.max(bottom, rect.bottom - hostTop);
+    }
+  }
+
+  if (!Number.isFinite(top) || !Number.isFinite(bottom)) return null;
+  return { top: top / height, bottom: bottom / height };
+}
+
+const clamp01 = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/**
+ * Down the outside, crossing only above and below every word.
+ *
+ * The line used to be routed with hand-tuned fractions per section, and every
+ * one of them was a guess that held until the copy or the type size changed.
+ * Promoting six section headings from 11px to 56px broke four of them at once:
+ * the line was suddenly drawn straight through "AT A GLANCE", "OUR MISSION" and
+ * "Project index".
+ *
+ * So this measures instead. The two horizontal runs are placed above the first
+ * line of text and below the last, and the vertical run sits in the page's
+ * outer margin. There is no fraction here that a copy change can invalidate.
+ */
+function gutterStrands(
+  side: 'left' | 'right',
+  entryX: number,
+  exitX: number,
+  heavy = false,
+): StrandBuilder {
+  return ({ width, height, section, host }) => {
+    if (!section || width < 768 || height <= 0) return [];
+
+    const band = textBand(section, host, height);
+    if (!band) return [];
+
+    const x = side === 'left' ? GUTTER_X : 1 - GUTTER_X;
+    const clearance = TEXT_CLEARANCE_PX / height;
+    const yTop = clamp01(band.top - clearance, 0.015, 0.45);
+    const yBottom = clamp01(band.bottom + clearance, 0.55, 0.985);
+
+    // Too little room to turn twice; the spine is the honest fallback.
+    if (yBottom - yTop < 0.12) return [];
+
+    return [
+      {
+        id: 'gutter',
+        heavy,
+        nodes: [
+          p(entryX, 0),
+          p(entryX, yTop),
+          p(x, yTop),
+          p(x, yBottom),
+          p(exitX, yBottom),
+          p(exitX, 1),
+        ],
+      },
+    ];
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /* S2 — the four-way split                                             */
 /* ------------------------------------------------------------------ */
 
@@ -214,9 +362,18 @@ export const glanceStrands: StrandBuilder = ({ width, height, section, host }) =
   const reachY = Math.min(...tops) - 0.015;
   const returnY = Math.max(...cols.map((c) => c.bottom)) + 0.025;
 
-  // The fork opens well above the numerals, so the diagonals read as takeoffs
-  // rather than as an underline.
-  const splitY = Math.max(0.05, reachY - 0.14);
+  /**
+   * The fork opens well above the numerals so the diagonals read as takeoffs
+   * rather than as an underline — but never above the section heading. When
+   * "AT A GLANCE" went from an 11px eyebrow to a 56px heading, the takeoffs
+   * started above it and landed below it, so four diagonals were drawn straight
+   * through the words. Measured, so the type size can change again safely.
+   */
+  const headingEl = section.querySelector<HTMLElement>('h2');
+  const headingBottom = headingEl
+    ? (headingEl.getBoundingClientRect().bottom - hostRect.top) / height
+    : 0;
+  const splitY = Math.max(0.05, headingBottom + 0.03, reachY - 0.14);
 
   /**
    * The branches gather into a horizontal collector rather than fanning back to
@@ -268,60 +425,6 @@ export const glanceStrands: StrandBuilder = ({ width, height, section, host }) =
 /* S3 — the line becomes the ground                                    */
 /* ------------------------------------------------------------------ */
 
-/**
- * Where the horizon sits in the pinned viewport, as a fraction of its height.
- * Shared with S3Journey so the ground line, the structures' baseline and the
- * red line's stubs all land on the same horizon.
- */
-export const JOURNEY_GROUND_Y = 0.72;
-
-/**
- * S3's line: it becomes the timeline's rail.
- *
- * The section is a vertical list of fourteen dated milestones, and the line runs
- * down the left of that list so each milestone's top rule meets it as a tick.
- *
- * The rail's x is MEASURED off the list element rather than guessed, because the
- * list is padded away from the line by a fixed amount in CSS. If this used a
- * fraction instead, one change to that padding would silently put the line
- * through the middle of the years. Measuring means the two cannot disagree.
- *
- * It enters and leaves at the centre — `entryX`/`exitX` are 0.5 and the segments
- * above and below meet it there — so the excursion to the left and back is part
- * of the strand, not a break in the line.
- */
-export const journeyStrands: StrandBuilder = ({ width, height, section, host }) => {
-  if (!section || width < 768 || height <= 0) return [];
-
-  const list = section.querySelector<HTMLElement>('[data-journey-rail]');
-  if (!list) return [];
-
-  const hostRect = host.getBoundingClientRect();
-  const railX = (list.getBoundingClientRect().left - hostRect.left) / width;
-  // A rail outside the middle band means an unexpected layout; take the spine.
-  if (!(railX > 0.02 && railX < 0.45)) return [];
-
-  const top = (list.getBoundingClientRect().top - hostRect.top) / height;
-  const enter = Math.min(Math.max(top, 0.06), 0.4);
-
-  // Right-angle elbows, not a diagonal. Everywhere else on this page the line
-  // reads as pipework or conduit; a long swooping diagonal reads as decoration
-  // and belongs to a different site.
-  return [
-    {
-      id: 'rail',
-      heavy: true,
-      nodes: [
-        p(0.5, 0),
-        p(0.5, enter),
-        p(railX, enter),
-        p(railX, 0.95),
-        p(0.5, 0.95),
-        p(0.5, 1),
-      ],
-    },
-  ];
-};
 
 /* ------------------------------------------------------------------ */
 /* S5 — the line coils into the values grid                            */
@@ -414,64 +517,9 @@ export const mapStrands: StrandBuilder = ({ width, height, section, host }) => {
 /* S12 — the line closes into the zero                                 */
 /* ------------------------------------------------------------------ */
 
-/**
- * S12's line: down the centre, around one enormous closed ring, and away.
- *
- * On the pinned desktop composition everything else is cleared out, so the ring
- * grows to occupy most of the frame — the brief's giant 0. The stacked mobile
- * version keeps the smaller ring from the spine, where it shares the frame with
- * the copy.
- *
- * The retrace that lets a closed ring still be one continuous stroke is in
- * `buildPath`; see the ring branch there.
- */
-export const safetyStrands: StrandBuilder = ({ width }) => {
-  if (width < 768) return [];
-  return [
-    {
-      id: 'zero',
-      nodes: [p(0.5, 0), { kind: 'ring', cx: 0.5, cy: 0.44, radius: 0.3 }, p(0.5, 1)],
-      heavy: true,
-    },
-  ];
-};
-
 /* ------------------------------------------------------------------ */
 /* S8 — the line becomes a manifold                                    */
 /* ------------------------------------------------------------------ */
-
-/**
- * Where the header pipe runs, as a fraction of the pinned viewport's height.
- * Set below the section heading — at 0.2 the pipe cut straight through it.
- */
-export const MANIFOLD_HEADER_Y = 0.25;
-
-/** How far the valve branches drop below the header before reaching the stage. */
-export const MANIFOLD_DROP_Y = 0.35;
-
-/** Six valves, evenly spread along the header's run. */
-export const MANIFOLD_VALVE_X = [0.185, 0.315, 0.445, 0.575, 0.705, 0.835];
-
-/**
- * S8's line: a riser down the outside of the six services.
- *
- * This was a header pipe with six valves, each branch charging as its service
- * came up. That only worked while the six panels were stacked in one pinned
- * frame and revealed one at a time. They are now an ordinary list down the page,
- * so a manifold has nothing to feed: the line runs down beside them instead and
- * returns to centre to hand off to S9.
- */
-export const capabilitiesStrands: StrandBuilder = ({ width }) => {
-  if (width < 768) return [];
-  return [
-    {
-      id: 'riser',
-      heavy: true,
-      // Elbows rather than diagonals — see journeyStrands for why.
-      nodes: [p(0.5, 0), p(0.5, 0.05), p(0.08, 0.05), p(0.08, 0.95), p(0.5, 0.95), p(0.5, 1)],
-    },
-  ];
-};
 
 /* ------------------------------------------------------------------ */
 /* S13 — the line becomes the mark                                     */
@@ -507,6 +555,7 @@ export const SEGMENTS: LineSegment[] = [
     becomes: 'A blueprint construction line drawing a plant',
     // Born at the base of the structure, descends toward S2.
     nodes: [p(0.5, 0.58), p(0.5, 1)],
+    strands: heroStrands,
   },
   {
     id: 'glance',
@@ -524,11 +573,10 @@ export const SEGMENTS: LineSegment[] = [
     exitX: 0.5,
     heavy: true,
     becomes: 'The ground/pipeline the camera travels along through time',
-    // Spine is the mobile fallback: a plain vertical run down the stacked
-    // milestones. journeyStrands replaces it with entry/exit stubs on desktop,
-    // where the long horizontal ground lives inside the moving world instead.
+    // Spine is the fallback the continuity contract is checked against; the
+    // measured gutter route replaces it whenever the section can be measured.
     nodes: [p(0.5, 0), p(0.5, 1)],
-    strands: journeyStrands,
+    strands: gutterStrands('left', 0.5, 0.5, true),
   },
   {
     id: 'map',
@@ -556,6 +604,8 @@ export const SEGMENTS: LineSegment[] = [
     exitX: 0.5,
     becomes: 'Forks into two, then reconverges',
     nodes: [p(0.28, 0), p(0.28, 0.4), p(0.5, 0.4), p(0.5, 1)],
+    // Measured: down the outside, crossing only clear of the words.
+    strands: gutterStrands('left', 0.28, 0.5),
   },
   {
     id: 'leadership',
@@ -565,24 +615,19 @@ export const SEGMENTS: LineSegment[] = [
     // Ends hard left so the manifold header below can run the full width in one
     // stroke instead of doubling back over itself.
     nodes: [p(0.5, 0), p(0.5, 0.48), p(0.08, 0.48), p(0.08, 1)],
+    // Measured: down the outside, crossing only clear of the words.
+    strands: gutterStrands('left', 0.5, 0.08),
   },
   {
     id: 'capabilities',
     entryX: 0.08,
     exitX: 0.5,
     heavy: true,
-    becomes: 'A manifold header pipe with 6 valves feeding 6 services',
-    // Spine is the mobile fallback. capabilitiesStrands splits it into the
-    // header, six valve branches and the outgoing trunk on desktop.
-    nodes: [
-      p(0.08, 0),
-      p(0.08, MANIFOLD_HEADER_Y),
-      p(0.92, MANIFOLD_HEADER_Y),
-      p(0.92, 0.92),
-      p(0.5, 0.92),
-      p(0.5, 1),
-    ],
-    strands: capabilitiesStrands,
+    becomes: 'A heavy riser down the outside of the six disciplines',
+    // Enters at 0.08 because leadership above exits hard left. Spine is the
+    // fallback; the measured gutter route replaces it.
+    nodes: [p(0.08, 0), p(0.08, 0.5), p(0.5, 0.5), p(0.5, 1)],
+    strands: gutterStrands('left', 0.08, 0.5, true),
   },
   {
     id: 'clients',
@@ -609,6 +654,8 @@ export const SEGMENTS: LineSegment[] = [
       p(0.5, 0.78),
       p(0.5, 1),
     ],
+    // Measured: down the outside, crossing only clear of the words.
+    strands: gutterStrands('left', 0.5, 0.5),
   },
   {
     id: 'track-record',
@@ -617,6 +664,8 @@ export const SEGMENTS: LineSegment[] = [
     becomes: 'The timeline axis of the project index',
     // The long vertical at x=0.1 is the index's timeline axis.
     nodes: [p(0.5, 0), p(0.5, 0.24), p(0.1, 0.24), p(0.1, 0.9), p(0.5, 0.9), p(0.5, 1)],
+    // Measured: down the outside, crossing only clear of the words.
+    strands: gutterStrands('left', 0.5, 0.5),
   },
   {
     id: 'quality',
@@ -642,20 +691,23 @@ export const SEGMENTS: LineSegment[] = [
       p(0.5, 0.88),
       p(0.5, 1),
     ],
+    // Measured: down the outside, crossing only clear of the words.
+    strands: gutterStrands('left', 0.5, 0.5),
   },
   {
     id: 'safety',
     entryX: 0.5,
     exitX: 0.5,
     becomes: 'Curves and closes into a giant 0',
-    // Spine is the stacked mobile version, where the ring shares the frame with
-    // the copy. safetyStrands grows it to fill the pinned desktop frame.
+    // The ring is the fallback spine only. Unpinned, this section is 726px and
+    // its copy fills it, so a ring large enough to read is a ring drawn across
+    // the words — the measured gutter route replaces it.
     nodes: [
       p(0.5, 0),
       { kind: 'ring', cx: 0.5, cy: 0.38, radius: 0.26 },
       p(0.5, 1),
     ],
-    strands: safetyStrands,
+    strands: gutterStrands('left', 0.5, 0.5, true),
   },
   {
     id: 'contact',
@@ -834,7 +886,15 @@ export function buildPath(
  * one section to the next is trivially continuous. The desktop entry/exit values
  * still govern the desktop composition and are what `assertContinuity` checks.
  */
-const MOBILE_GUTTER_X = 0.055;
+/**
+ * Where the line runs on a phone, as a fraction of the section width.
+ *
+ * `.shell` uses `px-6` below the breakpoint, so text starts 24px in. At 0.055
+ * the line landed at 21px — a 3px gap, which at a 2px stroke reads as touching
+ * the words rather than running beside them. 0.035 is 13px on a 375px phone and
+ * 11px on a 320px one, which is a gap you can see.
+ */
+const MOBILE_GUTTER_X = 0.035;
 
 function mobileSpine(segment: LineSegment): LineStrand[] {
   // The hero still births the line partway down; contact still terminates on

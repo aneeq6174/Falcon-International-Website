@@ -3,8 +3,9 @@
 The site is built. Fourteen sections, the continuous red line, the preloader, and
 the mobile, reduced-motion and performance passes.
 
-**The site is three pages.** `/` carries the story; `/capabilities` and
-`/track-record` hold the detail that was making the home page 21 screens long.
+**The site is four pages.** `/` carries the story; `/journey`, `/capabilities`
+and `/track-record` hold the detail that was making the home page 21 screens
+long. It is now 14.5.
 The home page summarises each and links to it. Internal links are root-relative
 so the shared nav works from all three.
 

@@ -77,16 +77,45 @@ them and were making it 21 screens, so they moved out:
 | Route | What it holds | Home page keeps |
 |---|---|---|
 | `/` | S0–S13, the whole story | — |
+| `/journey` | all fourteen milestones, 1997–2026 | four milestones + link |
 | `/capabilities` | six disciplines in full, with scope lists | a six-card summary + link |
 | `/track-record` | every project since 1998, filterable | the six most recent + link |
 
-**21.4 screens → 16.4.** Capabilities went 4.6 screens to 1.4; track record 2.9
-to 1.1.
+**21.4 screens → 14.5.** Capabilities went 4.6 screens to 1.4, journey 3.2 to
+1.1, track record 2.9 to 1.1.
 
 This is deliberately a hub, not a fully split site. It is a lead-generation
 page: every click between "interested" and the enquiry form loses people, so
 only the two sections a reader would go looking for *deliberately* earn a route
 of their own. Everything else stays where the story puts it.
+
+### The line must never be drawn across the words
+
+`gutterStrands()` in `lib/redline.ts` is how a segment gets past a section: down
+the page's outer margin, crossing horizontally only above the first line of text
+and below the last. Both crossings are **measured** — `textBand()` walks the
+section's text nodes and takes their real line boxes.
+
+It replaced per-section fractions, and the reason is worth keeping. Those
+fractions were guesses that held right up until the content changed. Promoting
+six section headings from an 11px eyebrow to a 56px heading broke four of them
+in one commit: the line was suddenly drawn straight through "AT A GLANCE",
+"OUR MISSION" and "Project index". Seven of thirteen sections had the line over
+their own copy.
+
+Two things that are easy to get wrong here:
+
+- **Measure text nodes, not elements.** A heading inside a full-width `<header>`
+  reports a box spanning the whole column while the words stop a third of the
+  way across. Routing against element boxes both refuses valid space and calls
+  unsafe crossings safe.
+- **Clearance must be at least the corner radius.** A horizontal run placed 14px
+  above a heading still turns through a 32px arc, and that arc dips back into
+  the words. `TEXT_CLEARANCE_PX` is `CORNER_RADIUS + 10` for exactly this.
+
+To check it, sample the drawn path and test each point against those line boxes
+— that is the only check that catches this, and `getBoundingClientRect()` on the
+block will tell you everything is fine while it plainly is not.
 
 **Every internal link is root-relative** (`/#journey`, not `#journey`) because
 the nav renders on all three pages. A bare hash on `/capabilities` looks for a
