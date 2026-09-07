@@ -132,19 +132,11 @@ export function S13Contact() {
 
       build: ({ conditions, q, root }) => {
         const strands = q('[data-strand]') as SVGPathElement[];
-        const body = q('[data-falcon-body]')[0];
-        const wings = q('[data-falcon-wing]') as SVGPathElement[];
-        const word = q('[data-falcon-word]')[0];
+        const glyph = q('[data-falcon-mark]')[0];
         const panel = q('[data-contact-panel]')[0];
-        if (!body || !panel) return;
+        if (!glyph || !panel) return;
 
-        gsap.set(body, { transformOrigin: '50% 100%', scaleY: 0, opacity: 0 });
-        wings.forEach((wing) => {
-          const left = wing.dataset.side === 'left';
-          // Inner edge: the left wing opens rightward, the right leftward.
-          gsap.set(wing, { transformOrigin: left ? '100% 0%' : '0% 0%', scaleX: 0, opacity: 0 });
-        });
-        gsap.set(word, { opacity: 0, scale: 0.94, transformOrigin: '50% 100%' });
+        gsap.set(glyph, { opacity: 0, scale: 0.94, transformOrigin: '50% 50%' });
         gsap.set(panel, { opacity: 0, y: 24 });
 
         strands.forEach(hideStrand);
@@ -159,22 +151,14 @@ export function S13Contact() {
         const tl = gsap.timeline({
           scrollTrigger: { trigger: root, start: 'top 72%', once: true, onEnter: guaranteeReveal },
         });
-        tl.to(body, { scaleY: 1, opacity: 1, duration: 0.5, ease: 'power4.out' }, 0)
-          .to(
-            wings,
-            { scaleX: 1, opacity: 1, duration: 0.6, ease: 'power4.out', stagger: 0.1 },
-            0.3,
-          )
-          .to(word, { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }, 0.8)
-          .to(panel, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 1.0);
+        tl.to(glyph, { opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' }, 0)
+          .to(panel, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 0.35);
 
       },
 
       settle: ({ q }) => {
         (q('[data-strand]') as SVGPathElement[]).forEach(revealStrand);
-        gsap.set(q('[data-falcon-body]'), { scaleY: 1, opacity: 1 });
-        gsap.set(q('[data-falcon-wing]'), { scaleX: 1, opacity: 1 });
-        gsap.set(q('[data-falcon-word]'), { opacity: 1, scale: 1 });
+        gsap.set(q('[data-falcon-mark]'), { opacity: 1, scale: 1 });
         gsap.set(q('[data-contact-panel]'), { opacity: 1, y: 0 });
       },
     },

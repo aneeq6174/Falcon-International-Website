@@ -14,11 +14,12 @@ export function Nav() {
       <div className="shell flex h-16 items-center justify-between gap-4 xl:gap-6">
         <a href="#hero" className="flex items-center gap-3" data-nav-mark>
           {/*
-            The vector glyph, not the source PNG. That file is 1.26MB — nearly
-            half the export — for a 36px mark, and it was being fetched on every
-            page load as both the nav logo and the favicon.
+            The client's own mark, cropped out of their logo file and reduced
+            from 1.26 MB to 35 kB. The name beside it is live text rather than
+            the logo's arced wordmark, which is near-black and would vanish on
+            this navy. See components/scenes/FalconMark.tsx.
           */}
-          <FalconMark wordmark={false} className="h-7 w-auto" />
+          <FalconMark eager className="h-7 w-auto" />
           <span className="sr-only">{nav.logoAlt}</span>
           <span className="hidden whitespace-nowrap font-display text-sm font-bold uppercase tracking-wider text-white sm:block lg:hidden xl:block">
             {org.name}

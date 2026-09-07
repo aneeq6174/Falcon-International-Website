@@ -57,8 +57,9 @@ export const metadata: Metadata = {
     follow: true,
     googleBot: { index: true, follow: true, 'max-image-preview': 'large' },
   },
-  // Favicon comes from app/icon.svg (Next's file convention) — a few hundred
-  // bytes of vector rather than a 1.26MB raster fetched on every page load.
+  // Favicon comes from app/icon.png (Next's file convention): the client's own
+  // mark, cropped from their logo file and reduced to 4 kB, rather than the
+  // 1.26 MB original fetched on every page load.
 };
 
 export const viewport: Viewport = {

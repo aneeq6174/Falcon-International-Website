@@ -64,32 +64,21 @@ export function S0Preloader({ preview = false }: { preview?: boolean }) {
     const timers: Array<ReturnType<typeof setTimeout>> = [];
 
     const ctx = gsap.context(() => {
-      const word = root.querySelector('[data-falcon-word]');
-      const body = root.querySelector('[data-falcon-body]');
-      const wings = root.querySelectorAll('[data-falcon-wing]');
+      const glyph = root.querySelector('[data-falcon-mark]');
       const rule = root.querySelector('[data-preload-rule]');
       const count = root.querySelector<HTMLElement>('[data-preload-count]');
       const mark = root.querySelector<HTMLElement>('[data-preload-mark]');
 
-      gsap.set(word, { opacity: 0, y: 10 });
-      gsap.set(body, { transformOrigin: '50% 100%', scaleY: 0 });
-      wings.forEach((wing) => {
-        const left = (wing as HTMLElement).dataset.side === 'left';
-        gsap.set(wing, { transformOrigin: left ? '100% 0%' : '0% 0%', scaleX: 0 });
-      });
+      // The mark is the client's artwork, so it arrives whole rather than being
+      // assembled from parts it does not have.
+      gsap.set(glyph, { opacity: 0, scale: 0.92, transformOrigin: '50% 50%' });
       gsap.set(rule, { transformOrigin: '0% 50%', scaleX: 0 });
 
       const progress = { v: 0 };
 
       const intro = gsap.timeline();
       intro
-        .to(word, { opacity: 1, y: 0, duration: 0.34, ease: 'power2.out' }, 0)
-        .to(body, { scaleY: 1, duration: 0.3, ease: 'power4.out' }, 0.18)
-        .to(
-          wings,
-          { scaleX: 1, duration: 0.36, ease: 'power4.out', stagger: 0.06 },
-          0.3,
-        )
+        .to(glyph, { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }, 0)
         .to(rule, { scaleX: 1, duration: 1.1, ease: 'power2.inOut' }, 0.1)
         .to(
           progress,
@@ -184,7 +173,7 @@ export function S0Preloader({ preview = false }: { preview?: boolean }) {
       aria-label={preloader.label}
     >
       <div data-preload-mark className="w-[min(58vw,26rem)]">
-        <FalconMark className="h-auto w-full" />
+        <FalconMark eager className="h-auto w-full" />
       </div>
 
       <div className="flex w-[min(58vw,26rem)] flex-col gap-3">

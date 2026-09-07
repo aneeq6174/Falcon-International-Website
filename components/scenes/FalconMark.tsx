@@ -1,96 +1,51 @@
 /**
- * FalconMark — the logo, as vector, for S13's closing redraw.
+ * FalconMark — the company's actual logo.
  *
- * Traced from `/public/assets/falcon-logo.png`: two swept wings forming a wide
- * downward chevron with feather notches along their undersides, a rounded body
- * dome between them, and FALCON INTERNATIONAL arced above.
+ * This used to be a hand-traced SVG approximation, which was the wrong call. The
+ * client's artwork is a falcon in profile — head, hooked beak, eye, and wings
+ * built from separated feathers — and the trace was a blunt chevron with a bump
+ * in the middle. It was never going to be their mark, and it was not.
  *
- * Vector rather than the PNG because the brief has the red line REDRAW itself
- * into this mark — the wing geometry has to be animatable. It also happens to be
- * ~2KB against the PNG's 1.26MB, which is the other reason to trace it.
+ * `/assets/falcon-mark.png` is extracted from the supplied `falcon-logo.png`:
+ * the wings cropped away from the arced wordmark above them, flattened to the
+ * logo's own red plus its alpha mask, and downscaled to 900px. The source is a
+ * glossy presentation render, and its per-pixel colour noise was most of its
+ * weight — 1.26 MB became 35 kB with the silhouette untouched.
  *
- * ── Parts, in the order the brief reveals them ────────────────────────────
+ * ── Why the wordmark is not here ──────────────────────────────────────────
  *
- *   [data-falcon-body]   the central dome
- *   [data-falcon-wing]   left then right, sweeping outward from the centre
- *   [data-falcon-word]   the arced wordmark
+ * In the supplied file the arced "FALCON INTERNATIONAL" is #382D30 — near-black.
+ * The site is navy almost everywhere, so it would be invisible. The name is set
+ * in the site's own display face beside the mark instead, which is legible on
+ * every background and costs nothing.
  *
- * Wings sweep from their INNER edge outward, so `transform-origin` is set per
- * side by the section rather than in the markup.
- *
- * Decorative: the company name is already in the nav, the footer and the page
- * title, so this carries aria-hidden rather than repeating it a fourth time.
+ * Decorative by default: `alt=""`. Every call site that needs the company name
+ * announced supplies it as real text or as an `sr-only` span.
  */
 
-export const FALCON_VIEWBOX = { width: 400, height: 240 } as const;
-
-/** Where the body dome's apex sits, for the line to arrive at. */
-export const FALCON_APEX = { x: 200, y: 48 } as const;
-
-/**
- * The dome AND the wedge below it, down to the point where the wings meet.
- * Stopping the body at its own baseline leaves a V-shaped notch bitten out of
- * the middle of the mark, because the wings converge below that line.
- */
-const BODY =
-  'M150 116C150 70 172 48 200 48C228 48 250 70 250 116L250 150L200 216L150 150Z';
-
-/** Left wing: top edge out to the tip, in to the point, back along the feathers. */
-const WING_LEFT =
-  'M16 116L150 116L200 216L172 201L158 201L136 181L122 181L99 161L85 161L62 141L48 141Z';
-
-/** Mirrored about x = 200. */
-const WING_RIGHT =
-  'M384 116L250 116L200 216L228 201L242 201L264 181L278 181L301 161L315 161L338 141L352 141Z';
+/** The exported asset's intrinsic size. Declared so the box is reserved. */
+const MARK_W = 900;
+const MARK_H = 337;
 
 export function FalconMark({
   className,
-  wordmark = true,
+  /** Above the fold — the nav and the preloader. Skips lazy-loading. */
+  eager = false,
 }: {
   className?: string;
-  /** The nav uses the glyph alone; the wordmark would be illegible at 36px. */
-  wordmark?: boolean;
+  eager?: boolean;
 }) {
   return (
-    <svg
-      className={`overflow-visible ${className ?? ''}`}
-      viewBox={wordmark ? `0 0 ${FALCON_VIEWBOX.width} ${FALCON_VIEWBOX.height}` : "8 40 384 184"}
-      preserveAspectRatio="xMidYMid meet"
-      fill="none"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <defs>
-        {/*
-          The wordmark's baseline. Never stroked — it exists to carry text.
-          A quadratic rather than an elliptical arc: with `A` the sweep flag
-          decides which way the curve bulges, and the wrong one sends the text
-          off the side of the mark instead of over the top of it. A control point
-          above the endpoints is unambiguous.
-        */}
-        <path id="falcon-arc" d="M46 104Q200 -18 354 104" />
-      </defs>
-
-      <g fill="#E23327">
-        <path data-falcon-body d={BODY} />
-        <path data-falcon-wing data-side="left" d={WING_LEFT} />
-        <path data-falcon-wing data-side="right" d={WING_RIGHT} />
-      </g>
-
-      {wordmark ? (
-      <text
-        data-falcon-word
-        fill="#FFFFFF"
-        fillOpacity="0.82"
-        fontSize="21"
-        letterSpacing="2.6"
-        style={{ fontFamily: 'var(--font-display), system-ui, sans-serif', fontWeight: 700 }}
-      >
-        <textPath href="#falcon-arc" startOffset="50%" textAnchor="middle">
-          FALCON INTERNATIONAL
-        </textPath>
-      </text>
-      ) : null}
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/assets/falcon-mark.png"
+      alt=""
+      width={MARK_W}
+      height={MARK_H}
+      data-falcon-mark
+      draggable={false}
+      loading={eager ? 'eager' : 'lazy'}
+      className={className}
+    />
   );
 }

@@ -44,7 +44,7 @@ production build, not assumed.
 
 ## What has to happen before launch
 
-Three of these need the client, not a developer. The form is already live.
+These need the client, not a developer. The form and the company mark are done.
 
 ### 1. The contact form — DONE, but know how to fix it
 
@@ -97,13 +97,30 @@ WhatsApp.
 `.env.example` is the template. **Never commit real values** — `.env` is
 gitignored.
 
-### 2. Client logo artwork
+### 2. The company mark — done, and how it was made
+
+The nav, the preloader, the favicon and S13's closing reveal all use
+`/public/assets/falcon-mark.png`. That is **the client's own artwork**, not an
+interpretation: the falcon cropped out of the supplied `falcon-logo.png`,
+flattened to the logo's red plus its alpha mask, and downscaled to 900px —
+1.26 MB to 35 kB with the silhouette untouched. `app/icon.png` is the same crop
+at 180x180.
+
+The arced "FALCON INTERNATIONAL" wordmark in the source file is **#382D30, which
+is near-black**, so it disappears on the navy this site uses almost everywhere.
+The name is set in the site's own display face beside the mark instead. If the
+client supplies a reversed (white) wordmark, it can go back in.
+
+To regenerate either file after new artwork arrives, the extraction is described
+in the header of `components/scenes/FalconMark.tsx`.
+
+### 3. Client logo artwork
 
 `content/site.ts → clients.logos` lists sixteen clients as text. S9 renders each
 as a wordmark in the display face. When the artwork arrives, swap the contents of
 the cell in `S9Clients.tsx`; the rails and the marquee do not change.
 
-### 3. Photography
+### 4. Photography
 
 Every photo slot renders as a labelled navy placeholder at the correct aspect
 ratio, captioned with what belongs there. To swap one in, set `src` on the slot in
@@ -112,7 +129,7 @@ founder's portrait and the two management portraits.
 
 Per brief §10, no stock photography was used and none was generated.
 
-### 4. A social card
+### 5. A social card
 
 `falcon-logo.png` is still the Open Graph image. It is the raw logo at 1536×1024,
 not a 1200×630 card, so link previews will letterbox it. The page itself no longer
@@ -156,9 +173,10 @@ every pinned timeline took first-load JS from 169 kB to 162 kB gzipped.
 | LCP, simulated Fast 3G | ≤ 2.5s | not measured | ⚠️ |
 | Sustained 60fps, 4× CPU throttle | 60fps | not measured | ⚠️ |
 
-513 kB JS raw across 14 chunks, 82 kB fonts, **0 kB images** — there is not a
-single `<img>` on the page. The nav mark, the favicon and S13's closing reveal are all
-vector, which removed the 1.26 MB logo PNG from the critical path entirely.
+511 kB JS raw across 14 chunks, 82 kB fonts, **39 kB images** — the company mark
+(35 kB) and the favicon (4 kB), and nothing else. The supplied 1.26 MB
+`falcon-logo.png` is never fetched by the page. The nav mark, the favicon and S13's closing reveal all use one 35 kB crop of
+the client's own logo instead of the 1.26 MB original.
 
 Zero elements carry `will-change` at rest, down from 54: `stroke-dashoffset` is
 not a compositable property, so promoting it created no layer and only cost
