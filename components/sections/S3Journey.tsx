@@ -31,7 +31,7 @@ import { JourneyStructure } from '@/components/scenes/JourneyStructures';
 import { Eyebrow } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
 import { hideStrand, revealStrand } from '@/lib/redline';
-import { SCENE_BUILD_SELECTOR, buildScene, settleScene, guaranteeReveal } from '@/lib/scene';
+import { ITEM_REVEAL_START, SCENE_BUILD_SELECTOR, SECTION_REVEAL_START, buildScene, guaranteeReveal, settleScene } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { journey } from '@/content/site';
 
@@ -53,14 +53,14 @@ export function S3Journey() {
         gsap.to(strands, {
           strokeDashoffset: 0,
           ease: 'power1.inOut',
-          scrollTrigger: { trigger: root, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
           duration: 0.9,
         });
 
         // One short build per milestone, played once on entry and left alone.
         stations.forEach((station) => {
           const tl = gsap.timeline({
-            scrollTrigger: { trigger: station, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+            scrollTrigger: { trigger: station, start: ITEM_REVEAL_START, once: true, onEnter: guaranteeReveal },
           });
           buildScene(tl, station, 0, 0.45);
           tl.fromTo(

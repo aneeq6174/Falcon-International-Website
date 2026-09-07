@@ -48,6 +48,8 @@ import {
   settleCounters,
   settleScene,
   guaranteeReveal,
+  SECTION_REVEAL_START,
+  ITEM_REVEAL_START,
 } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { capabilities } from '@/content/site';
@@ -88,7 +90,7 @@ export function S8Capabilities() {
         gsap.to(strands, {
           strokeDashoffset: 0,
           ease: 'power1.inOut',
-          scrollTrigger: { trigger: root, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
           duration: 0.9,
         });
 
@@ -96,7 +98,7 @@ export function S8Capabilities() {
 
         panels.forEach((panel, i) => {
           const tl = gsap.timeline({
-            scrollTrigger: { trigger: panel, start: 'top 78%', once: true, onEnter: guaranteeReveal },
+            scrollTrigger: { trigger: panel, start: ITEM_REVEAL_START, once: true, onEnter: guaranteeReveal },
           });
           buildScene(tl, panel, 0, 0.5);
           const own = counters.filter((c) => panel.contains(c.el));

@@ -37,7 +37,7 @@ import { FalconMark } from '@/components/scenes/FalconMark';
 import { Button, Eyebrow } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
 import { CONTACT_MARK_Y, hideStrand, revealStrand } from '@/lib/redline';
-import { guaranteeReveal } from '@/lib/scene';
+import { SECTION_REVEAL_START, guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { contact, org, whatsapp } from '@/content/site';
 
@@ -145,11 +145,11 @@ export function S13Contact() {
         gsap.to(strands, {
           strokeDashoffset: 0,
           ease: 'power1.inOut',
-          scrollTrigger: { trigger: root, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
           duration: 0.9,
         });
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: root, start: 'top 72%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
         });
         tl.to(glyph, { opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' }, 0)
           .to(panel, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 0.35);

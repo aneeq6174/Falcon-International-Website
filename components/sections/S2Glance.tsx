@@ -40,6 +40,7 @@ import {
   resetCounters,
   settleCounters,
   guaranteeReveal,
+  SECTION_REVEAL_START,
 } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { glance } from '@/content/site';
@@ -102,7 +103,7 @@ export function S2Glance() {
 
         /* One reveal on entry, at every width. Nothing pins, nothing scrubs. */
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: rootRef.current, start: 'top 75%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: rootRef.current, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
           onStart: promote,
           onComplete: release,
         });

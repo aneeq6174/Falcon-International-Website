@@ -37,7 +37,7 @@ import {
   sectionTone,
 } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
-import { guaranteeReveal } from '@/lib/scene';
+import { SECTION_REVEAL_START, guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { trackRecord } from '@/content/site';
 
@@ -65,7 +65,7 @@ export function S10TrackRecord() {
         duration: 0.5,
         ease: 'power2.out',
         stagger: 0.02,
-        scrollTrigger: { trigger: root, start: 'top 80%', once: true, onEnter: guaranteeReveal },
+        scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
       });
     },
 

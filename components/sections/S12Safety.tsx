@@ -33,7 +33,7 @@ import { RedLine } from '@/components/RedLine';
 import { Eyebrow } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
 import { hideStrand, revealStrand } from '@/lib/redline';
-import { countTween, formatCount, readCounters, guaranteeReveal } from '@/lib/scene';
+import { SECTION_REVEAL_START, countTween, formatCount, guaranteeReveal, readCounters } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { safety } from '@/content/site';
 
@@ -84,7 +84,7 @@ export function S12Safety() {
         gsap.to(strands, {
           strokeDashoffset: 0,
           ease: 'power1.inOut',
-          scrollTrigger: { trigger: root, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
           duration: 0.9,
         });
         const tl = gsap.timeline({

@@ -289,3 +289,22 @@ export function guaranteeReveal(self: { animation?: gsap.core.Animation | null }
     if (anim.progress() < 1) anim.progress(1);
   }, 2500);
 }
+
+/**
+ * Where a reveal fires.
+ *
+ * Most of these used to be `top 85%`, which puts the trigger only 15% of a
+ * viewport above the fold. For a section 700 to 4,000px tall that meant the
+ * reveal ran AND finished while the reader was still looking at the section
+ * before it — they arrived to something already over, and never saw it.
+ *
+ * The hero never had this problem, because it is on screen at load. That is why
+ * it was the one that felt right, and it is the feel these two values restore.
+ *
+ * Use SECTION for a trigger watching a whole section: it holds off until the
+ * section is genuinely the thing on screen. Use ITEM for a row, card or panel
+ * INSIDE a section the reader is already in — those are small, so they should
+ * animate as they rise into view rather than waiting until they are centred.
+ */
+export const SECTION_REVEAL_START = 'top 62%';
+export const ITEM_REVEAL_START = 'top 80%';

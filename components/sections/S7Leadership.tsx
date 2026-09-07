@@ -28,7 +28,7 @@ import {
   sectionTone,
 } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
-import { guaranteeReveal } from '@/lib/scene';
+import { ITEM_REVEAL_START, guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { leadership } from '@/content/site';
 
@@ -49,7 +49,7 @@ export function S7Leadership() {
         gsap.to(cover, {
           scaleY: 0,
           ease: 'none',
-          scrollTrigger: { trigger: cover, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: cover, start: ITEM_REVEAL_START, once: true, onEnter: guaranteeReveal },
         });
       }
 
@@ -61,7 +61,7 @@ export function S7Leadership() {
           filter: 'blur(0px)',
           duration: 0.8,
           ease: 'power4.out',
-          scrollTrigger: { trigger: quote, start: 'top 82%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: quote, start: ITEM_REVEAL_START, once: true, onEnter: guaranteeReveal },
         });
       }
 

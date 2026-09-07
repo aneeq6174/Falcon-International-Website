@@ -28,7 +28,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { gsap, requestRefresh } from '@/lib/gsap';
-import { guaranteeReveal } from '@/lib/scene';
+import { SECTION_REVEAL_START, guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import {
   RED,
@@ -185,7 +185,7 @@ export function RedLine({
           stagger: 0.06,
           scrollTrigger: {
             trigger: sceneRef.current,
-            start: 'top 85%',
+            start: SECTION_REVEAL_START,
             once: true,
             onEnter: guaranteeReveal,
           },
