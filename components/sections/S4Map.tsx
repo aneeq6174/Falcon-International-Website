@@ -79,7 +79,7 @@ export function S4Map() {
           gsap.set(pulse, { transformOrigin: '50% 50%', scale: 0.5, opacity: 0.18 });
         };
 
-        /* ---- Mobile: no pin, no scrub. One reveal on entry. ------------ */
+        /* One reveal on entry, at every width. Nothing pins, nothing scrubs. */
         strands.forEach(hideStrand);
         gsap.to(strands, {
           strokeDashoffset: 0,

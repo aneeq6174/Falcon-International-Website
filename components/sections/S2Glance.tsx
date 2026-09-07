@@ -10,15 +10,15 @@
  *
  * The fourth statistic runs DOWN to zero and holds. Then the whole section
  * pauses before the branches reunite — an actual gap in the timeline, so under
- * scrub the reader keeps scrolling and nothing moves. That stillness is the
+ * the reader keeps scrolling and nothing moves. That stillness is the
  * point: it is the only place in the section where the page stops answering,
  * and it lands on the zero-fatalities figure.
  *
  * ── Counters ──────────────────────────────────────────────────────────────
  *
  * Tweened through a proxy object, writing textContent on update. Durations are
- * in timeline units, so under scrub they read as scroll distance rather than
- * seconds — a scrubbed counter that ran on a wall clock would finish while the
+ * in timeline units, so they stay in step with the rest of the sequence
+ * rather than racing it — a counter on its own wall clock would finish while the
  * reader was still arriving. Tabular numerals keep the width from jittering.
  */
 
@@ -100,7 +100,7 @@ export function S2Glance() {
           linePaths.forEach((p) => (p.style.willChange = 'stroke-dashoffset'));
         const release = () => linePaths.forEach((p) => (p.style.willChange = 'auto'));
 
-        /* ---- Mobile: no pin, no scrub. One on-enter reveal. ------------ */
+        /* One reveal on entry, at every width. Nothing pins, nothing scrubs. */
         const tl = gsap.timeline({
           scrollTrigger: { trigger: rootRef.current, start: 'top 75%', once: true, onEnter: guaranteeReveal },
           onStart: promote,

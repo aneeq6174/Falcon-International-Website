@@ -149,7 +149,7 @@ export function S13Contact() {
 
         strands.forEach(hideStrand);
 
-        /* ---- Mobile: no pin. One reveal on entry. ---------------------- */
+        /* One reveal on entry, at every width. Nothing pins, nothing scrubs. */
         gsap.to(strands, {
           strokeDashoffset: 0,
           ease: 'power1.inOut',

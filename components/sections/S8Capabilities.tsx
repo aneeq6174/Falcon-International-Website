@@ -27,7 +27,7 @@
  * ── One DOM, two layouts ──────────────────────────────────────────────────
  *
  * Below 768px the panels stop being absolute and simply stack, each building
- * once on entry. No pin, no scrub, no manifold. Same markup.
+ * once on entry. No pin, no scrub, no manifold, at any width.
  */
 
 import { useCallback, useState } from 'react';

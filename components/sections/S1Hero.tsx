@@ -91,7 +91,7 @@ export function S1Hero() {
          * RedLine. Promotion is reserved for transform and opacity.
          */
 
-        /* ---- Mobile: no pin, no scrub. One on-enter build. ------------- */
+        /* One build on entry, at every width. Nothing pins, nothing scrubs. */
         const tl = gsap.timeline({
           scrollTrigger: { trigger: rootRef.current, start: 'top 75%', once: true, onEnter: guaranteeReveal },
         });
