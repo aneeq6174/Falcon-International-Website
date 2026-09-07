@@ -3,7 +3,12 @@
 The site is built. Fourteen sections, the continuous red line, the preloader, and
 the mobile, reduced-motion and performance passes.
 
-**One thing to know before you touch the animation:** nothing on this page pins
+**The site is three pages.** `/` carries the story; `/capabilities` and
+`/track-record` hold the detail that was making the home page 21 screens long.
+The home page summarises each and links to it. Internal links are root-relative
+so the shared nav works from all three.
+
+**One thing to know before you touch the animation:** nothing pins
 and nothing scrubs. Every scene plays once when it comes into view and stays.
 It used to hold 1,850vh of pinned scrolling, which meant content flew past at a
 speed nobody could read and could only be recovered by scrolling to an exact

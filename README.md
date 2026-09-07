@@ -69,11 +69,39 @@ So every play-once trigger carries `onEnter: guaranteeReveal` (`lib/scene.ts`),
 which uses `setTimeout` — not rAF — to force the finished state after 2.5s if the
 animation has not got there on its own. **Add it to any new reveal.**
 
+## Three pages, not fourteen
+
+The home page carries the story end to end. Two things had real depth behind
+them and were making it 21 screens, so they moved out:
+
+| Route | What it holds | Home page keeps |
+|---|---|---|
+| `/` | S0–S13, the whole story | — |
+| `/capabilities` | six disciplines in full, with scope lists | a six-card summary + link |
+| `/track-record` | every project since 1998, filterable | the six most recent + link |
+
+**21.4 screens → 16.4.** Capabilities went 4.6 screens to 1.4; track record 2.9
+to 1.1.
+
+This is deliberately a hub, not a fully split site. It is a lead-generation
+page: every click between "interested" and the enquiry form loses people, so
+only the two sections a reader would go looking for *deliberately* earn a route
+of their own. Everything else stays where the story puts it.
+
+**Every internal link is root-relative** (`/#journey`, not `#journey`) because
+the nav renders on all three pages. A bare hash on `/capabilities` looks for a
+section that is not there and silently does nothing.
+
+The detail pages do NOT carry a red-line segment. The line's continuity contract
+describes thirteen segments of one continuous line down the home page; threading
+a fourteenth through a separate route would make that sentence false.
+
 ## Architecture
 
 ```
 /app        layout.tsx (fonts, metadata, JSON-LD) · page.tsx (composes S0–S13) · globals.css
-/components sections/S0…S13 (one file each) · RedLine.tsx · ui/
+            capabilities/page.tsx · track-record/page.tsx · api/contact/route.ts
+/components sections/S0…S13 (one file each) · pages/ (detail-page bodies) · RedLine.tsx · ui/
 /lib        gsap.ts (single registration point) · useScrollScene.ts · redline.ts · scene.ts
 /content    site.ts — ALL copy
 ```

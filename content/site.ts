@@ -74,13 +74,20 @@ export const nav = {
   skipToContent: 'Skip to content',
   logoAlt: 'Falcon International',
   cta: 'Start a project',
+  menuLabel: 'Menu',
+  /**
+   * Root-relative, because the nav renders on the detail pages too — a bare
+   * "#journey" there looks for a journey section on that page and does nothing.
+   * Capabilities and Track record point at their own pages rather than at the
+   * summaries, since the page is what someone clicking the nav is after.
+   */
   items: [
-    { label: 'Journey', href: '#journey' },
-    { label: 'Capabilities', href: '#capabilities' },
-    { label: 'Clients', href: '#clients' },
-    { label: 'Track record', href: '#track-record' },
-    { label: 'Safety', href: '#safety' },
-    { label: 'Contact', href: '#contact' },
+    { label: 'Journey', href: '/#journey' },
+    { label: 'Capabilities', href: '/capabilities/' },
+    { label: 'Clients', href: '/#clients' },
+    { label: 'Track record', href: '/track-record/' },
+    { label: 'Safety', href: '/#safety' },
+    { label: 'Contact', href: '/#contact' },
   ],
 } as const;
 
@@ -103,7 +110,12 @@ export const hero = {
   sub: 'Your Industrial Contracting Partner',
   disciplines: 'Manpower · General Orders · Electrical · Mechanical · Fabrication',
   ctaPrimary: 'Start a project',
-  ctaSecondary: 'Download profile',
+  /**
+   * Was 'Download profile', which promised a PDF that does not exist — the
+   * button has always gone to the project index instead. If a company profile
+   * PDF is supplied, put it in /public and restore the original label.
+   */
+  ctaSecondary: 'See our track record',
 } as const;
 
 /* ------------------------------------------------------------------ */
@@ -404,6 +416,12 @@ export type Capability = {
 export const capabilities = {
   eyebrow: 'CAPABILITIES',
   title: 'Six disciplines, one contractor',
+  /** The home page carries a summary; the detail lives at /capabilities. */
+  summary:
+    'One contractor across six disciplines, so a project does not have to be split between vendors who blame each other.',
+  cta: 'See all six in detail',
+  pageIntro:
+    'What Falcon International does, in full: the scope of each discipline, the trades it covers, and the scale we work at. Every one of these is delivered by our own supervised teams.',
   items: [
     {
       id: 'manpower',
@@ -539,6 +557,13 @@ export type Project = {
 export const trackRecord = {
   eyebrow: 'TRACK RECORD',
   title: 'Project index',
+  /** The home page carries highlights; the full index lives at /track-record. */
+  summary:
+    'Every contract since 1998, and the clients who came back. The full index is filterable by discipline.',
+  cta: 'Open the full project index',
+  pageIntro:
+    'Every project Falcon International has delivered since 1998, filterable by discipline. Repeat clients appear repeatedly — that is the point of publishing it in full.',
+  highlightsLabel: 'Selected projects',
   filters: [
     { id: 'all', label: 'All' },
     { id: 'piping-fabrication', label: 'Piping & Fabrication' },

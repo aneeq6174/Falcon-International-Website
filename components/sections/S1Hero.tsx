@@ -165,10 +165,10 @@ export function S1Hero() {
           <TermRun items={org.services} tone="white" />
 
           <div className="mt-2 flex flex-wrap items-center gap-4">
-            <Button href="#contact" variant="primary">
+            <Button href="/#contact" variant="primary">
               {hero.ctaPrimary}
             </Button>
-            <Button href="#track-record" variant="secondary">
+            <Button href="/track-record/" variant="secondary">
               {hero.ctaSecondary}
             </Button>
           </div>
