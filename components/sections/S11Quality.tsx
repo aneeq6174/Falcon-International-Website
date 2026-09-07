@@ -26,6 +26,7 @@ import {
   sectionTone,
 } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
+import { guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { quality } from '@/content/site';
 
@@ -48,7 +49,7 @@ export function S11Quality() {
       gsap.set(q('[data-badge-bloom]'), { transformOrigin: '50% 50%', scale: 0.7, opacity: 0 });
 
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: root, start: 'top 76%', once: true },
+        scrollTrigger: { trigger: root, start: 'top 76%', once: true, onEnter: guaranteeReveal },
       });
 
       badges.forEach((badge, i) => {

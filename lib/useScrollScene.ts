@@ -3,14 +3,26 @@
 /**
  * useScrollScene — the one way a section gets animated.
  *
- * Every scrubbed sequence on this site goes through this hook so that the three
- * things that are easy to forget are handled in exactly one place:
+ * ── Nothing pins and nothing scrubs ───────────────────────────────────────
  *
- *   1. Reduced motion. `prefers-reduced-motion: reduce` gets no Lenis, no pin,
- *      no scrub, no counters — the static page, which must look intentional and
- *      complete rather than broken (brief §6).
- *   2. Mobile. Below 768px ALL pinning and scrubbing is off. A janky scrubbed
- *      pin on a mid-range Android is far worse than a clean static reveal.
+ * An earlier version pinned seven sections and drove them with `scrub`, which
+ * added up to 1,850vh — eighteen screen-heights — of scrolling where the page
+ * did not advance. Scrubbing ties a sentence to one exact scroll offset: read it
+ * at the wrong speed and it flies past, and getting it back means hunting for
+ * the pixel it lives at. That is work the reader should never be doing.
+ *
+ * So every scene now does one thing: it plays ONCE when the section comes into
+ * view, over its own short duration, and leaves the result on screen. Scroll
+ * fast, stop halfway, scroll back up — the content is simply there. Motion is
+ * punctuation, not a gate.
+ *
+ * The three things that are easy to forget are handled here, in one place:
+ *
+ *   1. Reduced motion. `prefers-reduced-motion: reduce` gets no animation at
+ *      all — the static page, which must look intentional and complete rather
+ *      than broken (brief §6).
+ *   2. One path at every width. The same reveal runs on a phone and on a
+ *      desktop; only layout differs, and that is CSS's job, not this hook's.
  *   3. Cleanup. gsap.matchMedia() reverts every tween and ScrollTrigger created
  *      inside its callback — on unmount, and on every breakpoint or
  *      reduced-motion change. Nothing created in `build` needs manual teardown.
@@ -23,13 +35,17 @@
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { gsap, ScrollTrigger, requestRefresh } from './gsap';
 
-/** Below this width, nothing pins and nothing scrubs. Brief §6. */
+/** The layout breakpoint. Nothing pins at any width; this is a layout hint. */
 export const MOBILE_BREAKPOINT = 768;
 
 export type SceneConditions = {
-  /** ≥768px and the reader has not asked for reduced motion. */
+  /** The reader has not asked for reduced motion. True at every width. */
   motion: boolean;
-  /** <768px and the reader has not asked for reduced motion. */
+  /**
+   * Below 768px. A LAYOUT hint only — for a scene that genuinely has less room
+   * to work with. It must never select a different *kind* of animation, because
+   * there is only one kind now.
+   */
   mobile: boolean;
   /** The reader has asked for reduced motion, at any width. */
   reduced: boolean;
@@ -57,15 +73,17 @@ export type ScrollSceneOptions = {
    */
   settle?: (ctx: SceneContext) => void;
   /**
-   * Opt a scene into running on mobile as a simple on-enter reveal. Pinning and
-   * scrubbing are still forbidden there; this is for fade/translate/draw
-   * reveals only.
+   * Kept so existing call sites stay valid. It no longer selects anything:
+   * every scene runs at every width. Safe to delete from a section when you
+   * next touch it.
+   *
+   * @deprecated
    */
   runOnMobile?: boolean;
   /**
    * Defer building until the section is within one viewport, and tear down when
-   * it is two viewports away. Required for S3 and S8 by the performance budget
-   * (§6); pointless overhead for light sections.
+   * it is two viewports away. Rarely worth it now that no scene pins — an
+   * inactive trigger costs a scroll-offset comparison and nothing else.
    */
   lazy?: boolean;
 };
@@ -119,12 +137,10 @@ export function useScrollScene<T extends HTMLElement = HTMLElement>(
     });
 
     const run = (conditions: SceneConditions): (() => void) | void => {
-      const { build, settle, runOnMobile, lazy } = optionsRef.current;
+      const { build, settle, lazy } = optionsRef.current;
       const ctx = makeContext(conditions);
 
-      const wantsMotion = conditions.motion || (conditions.mobile && runOnMobile === true);
-
-      if (!wantsMotion || !build) {
+      if (!conditions.motion || !build) {
         settle?.(ctx);
         return;
       }
@@ -177,25 +193,29 @@ export function useScrollScene<T extends HTMLElement = HTMLElement>(
       return () => ctx.revert();
     }
 
+    /**
+     * `motion` is no longer width-dependent: the same reveal runs everywhere.
+     * `narrow` is tracked separately so matchMedia still re-runs on a
+     * breakpoint change, and so a scene that needs a layout hint has one.
+     */
     mm.add(
       {
-        motion: `(min-width: ${MOBILE_BREAKPOINT}px) and (prefers-reduced-motion: no-preference)`,
-        mobile: `(max-width: ${MOBILE_BREAKPOINT - 1}px) and (prefers-reduced-motion: no-preference)`,
+        motion: '(prefers-reduced-motion: no-preference)',
         reduced: '(prefers-reduced-motion: reduce)',
+        narrow: `(max-width: ${MOBILE_BREAKPOINT - 1}px)`,
       },
       (scope) => {
-        const c = scope.conditions as SceneConditions;
-        return run({ motion: !!c.motion, mobile: !!c.mobile, reduced: !!c.reduced });
+        const c = scope.conditions as Record<string, boolean>;
+        return run({ motion: !!c.motion, mobile: !!c.narrow, reduced: !!c.reduced });
       },
       root,
     );
 
     /**
-     * A scene that pins needs its start/end recomputed once everything it was
-     * built against has settled — the red line only renders its SVG after an
-     * async measure pass, and a pinned trigger created before that lands with
-     * an uncomputed end and silently never scrubs. Debounced and batched, so
-     * thirteen sections mounting at once cost one refresh.
+     * Triggers are measured against a page whose red line only renders its SVG
+     * after an async measure pass, so a trigger created before that lands with
+     * the wrong start offset and fires early or not at all. Debounced and
+     * batched, so thirteen sections mounting at once cost one refresh.
      */
     requestRefresh();
 

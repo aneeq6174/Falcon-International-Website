@@ -4,8 +4,8 @@
  * RedLine — one section's segment of the continuous red line.
  *
  * Measures its section, resolves the segment to its strands, generates each
- * path in CSS pixels, and (unless driven) scrubs them open with
- * stroke-dashoffset as the section travels the viewport.
+ * path in CSS pixels, and (unless driven) draws them open once with
+ * stroke-dashoffset as the section comes into view.
  *
  * Measuring is what makes the drawing correct. With the viewBox in CSS pixels
  * and mapped 1:1 to the element, corner radii stay circular whatever the
@@ -16,23 +16,21 @@
  *
  * ── Driven mode ───────────────────────────────────────────────────────────
  *
- * Pinned sections pass `driven`. The performance budget allows one master
- * ScrollTrigger per pinned section (§6), so the line cannot own a second one —
- * the section's own timeline tweens these paths instead, finding them with
- * `q('[data-strand]')`. In driven mode this component sets up no motion at all,
- * in any condition: the section is then responsible for the line under motion,
- * on mobile AND under reduced motion. `onStrands` reports the strand structure
- * so the section can rebuild if the fork appears or collapses.
+ * A section whose own timeline needs the line in sequence with its content
+ * passes `driven`. This component then sets up no motion at all and the
+ * section's timeline tweens these paths itself, finding them with
+ * `q('[data-strand]')`. `onStrands` reports the strand structure so the section
+ * can rebuild if a fork appears or collapses.
  *
  * The segment is decorative to assistive technology — everything it conveys is
  * carried by the headings and copy, never by the line itself.
  */
 
 import { useEffect, useRef, useState } from 'react';
-import { gsap, ScrollTrigger, requestRefresh } from '@/lib/gsap';
+import { gsap, requestRefresh } from '@/lib/gsap';
+import { guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import {
-  DRAW_WINDOW,
   RED,
   STROKE_WIDTH,
   STROKE_WIDTH_HEAVY,
@@ -129,7 +127,7 @@ export function RedLine({
         return { width, height, strands };
       });
 
-      // Rendering the SVG changes what pinned triggers measured against.
+      // Rendering the SVG changes what the triggers measured against.
       requestRefresh();
     };
 
@@ -157,11 +155,7 @@ export function RedLine({
 
   const sceneRef = useScrollScene<HTMLDivElement>(
     {
-      // Mobile still draws the line — it is the spine of the page. What mobile
-      // does not get is the scrub; the line draws once on entry instead.
-      runOnMobile: true,
-
-      build: ({ conditions, q }) => {
+      build: ({ q }) => {
         if (driven) return;
 
         const paths = q('[data-strand]') as SVGPathElement[];
@@ -176,24 +170,25 @@ export function RedLine({
          * rest before this was removed. Promotion is for transform and opacity.
          */
 
-        if (conditions.mobile) {
-          // Simple on-enter draw. No pin, no scrub. Brief §6.
-          gsap.to(paths, {
-            strokeDashoffset: 0,
-            duration: 0.9,
-            ease: 'power2.out',
-            stagger: 0.06,
-            scrollTrigger: { trigger: sceneRef.current, start: 'top 85%', once: true },
-          });
-          return;
-        }
-
-        ScrollTrigger.create({
-          trigger: sceneRef.current,
-          start: DRAW_WINDOW.start,
-          end: DRAW_WINDOW.end,
-          scrub: true,
-          animation: gsap.to(paths, { strokeDashoffset: 0, ease: 'none' }),
+        /**
+         * The line draws itself once as its section arrives, and stays drawn.
+         *
+         * It used to be scrubbed across the section's whole travel, which meant
+         * scrolling back up un-drew it. Tying the line to an exact scroll offset
+         * is the same mistake the pinned sections made — smaller, but the reader
+         * still watches something disappear for no reason they can act on.
+         */
+        gsap.to(paths, {
+          strokeDashoffset: 0,
+          duration: 0.9,
+          ease: 'power2.out',
+          stagger: 0.06,
+          scrollTrigger: {
+            trigger: sceneRef.current,
+            start: 'top 85%',
+            once: true,
+            onEnter: guaranteeReveal,
+          },
         });
       },
 

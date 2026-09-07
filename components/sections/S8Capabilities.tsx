@@ -3,7 +3,7 @@
 /**
  * S8 — Capabilities. ★ SECOND CENTREPIECE
  *
- * 500vh of pinned scrub. The red line runs across the top as a manifold header
+ * Six services, listed down the page. This was 500vh of pinned scroll with the
  * pipe with six valves; each scroll step quarter-turns the next valve open, red
  * charges down that branch, and the matching service takes the stage below while
  * the previous one wipes downward out of frame.
@@ -32,13 +32,10 @@
 
 import { useCallback, useState } from 'react';
 import { RedLine } from '@/components/RedLine';
-import { CapabilityScene, ManifoldValve } from '@/components/scenes/CapabilityScenes';
+import { CapabilityScene } from '@/components/scenes/CapabilityScenes';
 import { Eyebrow, ScopeList } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
 import {
-  MANIFOLD_DROP_Y,
-  MANIFOLD_HEADER_Y,
-  MANIFOLD_VALVE_X,
   hideStrand,
   revealStrand,
 } from '@/lib/redline';
@@ -50,6 +47,7 @@ import {
   resetCounters,
   settleCounters,
   settleScene,
+  guaranteeReveal,
 } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { capabilities } from '@/content/site';
@@ -86,121 +84,26 @@ export function S8Capabilities() {
         const fills = q('[data-valve-fill]');
 
         /* ---- Mobile: no pin, no manifold. One build per panel. --------- */
-        if (conditions.mobile) {
-          strands.forEach(hideStrand);
-          gsap.to(strands, {
-            strokeDashoffset: 0,
-            ease: 'none',
-            scrollTrigger: { trigger: root, start: 'top bottom', end: 'bottom 35%', scrub: true },
-          });
-
-          resetCounters(counters);
-
-          panels.forEach((panel, i) => {
-            const tl = gsap.timeline({
-              scrollTrigger: { trigger: panel, start: 'top 78%', once: true },
-            });
-            buildScene(tl, panel, 0, 0.5);
-            const own = counters.filter((c) => panel.contains(c.el));
-            own.forEach((c) => tl.add(countTween(c, 1.2), 0.15));
-            void i;
-          });
-          return;
-        }
-
-        /* ---- Desktop: one master trigger, 500vh of pinned scrub -------- */
-        const header = strands.find((s) => s.dataset.strand === 'header');
-        const trunkOut = strands.find((s) => s.dataset.strand === 'trunk-out');
-        const branches = MANIFOLD_VALVE_X.map((_, i) =>
-          strands.find((s) => s.dataset.strand === `branch-${i}`),
-        );
-
         strands.forEach(hideStrand);
+        gsap.to(strands, {
+          strokeDashoffset: 0,
+          ease: 'power1.inOut',
+          scrollTrigger: { trigger: root, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          duration: 0.9,
+        });
+
         resetCounters(counters);
 
-        gsap.set(handles, { transformOrigin: '50% 50%', rotate: 0 });
-        gsap.set(fills, { opacity: 0 });
-        // Every panel starts clear of the stage; step 0 brings the first in.
-        gsap.set(panels, { yPercent: 0, opacity: 0 });
-
-        const promote = () =>
-          panels.forEach((p) => ((p as HTMLElement).style.willChange = 'transform, opacity'));
-        const release = () =>
-          panels.forEach((p) => ((p as HTMLElement).style.willChange = 'auto'));
-
-        const tl = gsap.timeline({
-          defaults: { ease: 'none' },
-          scrollTrigger: {
-            trigger: root,
-            start: 'top top',
-            end: '+=500%',
-            pin: true,
-            pinSpacing: true,
-            anticipatePin: 1,
-            scrub: 1,
-            onEnter: promote,
-            onEnterBack: promote,
-            onLeave: release,
-            onLeaveBack: release,
-          },
-        });
-
-        // The header pipe arrives first.
-        if (header) tl.to(header, { strokeDashoffset: 0, duration: INTRO * 0.8 }, 0);
-
         panels.forEach((panel, i) => {
-          const at = stepAt(i);
-
-          // Valve quarter-turns open, then red charges down its branch.
-          if (handles[i]) {
-            tl.to(
-              handles[i],
-              { rotate: 90, duration: STEP_DUR * 0.14, ease: 'power4.out' },
-              at,
-            );
-          }
-          if (fills[i]) {
-            tl.to(fills[i], { opacity: 1, duration: STEP_DUR * 0.1 }, at + STEP_DUR * 0.08);
-          }
-          const branch = branches[i];
-          if (branch) {
-            tl.to(
-              branch,
-              { strokeDashoffset: 0, duration: STEP_DUR * 0.16 },
-              at + STEP_DUR * 0.1,
-            );
-          }
-
-          // The service takes the stage and assembles.
-          tl.fromTo(
-            panel,
-            { yPercent: 6, opacity: 0 },
-            { yPercent: 0, opacity: 1, duration: STEP_DUR * 0.18, ease: 'power2.out' },
-            at + STEP_DUR * 0.14,
-          );
-          buildScene(tl, panel, at + STEP_DUR * 0.2, STEP_DUR * 0.46);
-
+          const tl = gsap.timeline({
+            scrollTrigger: { trigger: panel, start: 'top 78%', once: true, onEnter: guaranteeReveal },
+          });
+          buildScene(tl, panel, 0, 0.5);
           const own = counters.filter((c) => panel.contains(c.el));
-          own.forEach((c) => tl.add(countTween(c, STEP_DUR * 0.42), at + STEP_DUR * 0.24));
-
-          // Previous service wipes downward out of frame as the next arrives.
-          if (i < STEPS - 1) {
-            tl.to(
-              panel,
-              { yPercent: 14, opacity: 0, duration: STEP_DUR * 0.16, ease: 'power2.in' },
-              stepAt(i + 1) + STEP_DUR * 0.02,
-            );
-          }
+          own.forEach((c) => tl.add(countTween(c, 1.2), 0.15));
+          void i;
         });
 
-        // Out to S9 once the last service has had its beat.
-        if (trunkOut) tl.to(trunkOut, { strokeDashoffset: 0, duration: 0.05 }, 0.94);
-
-        /**
-         * Pins the duration to exactly 1 so `progress(p)` and `stepAt(i)` agree.
-         * See the same guard in S3.
-         */
-        tl.set({}, {}, 1);
       },
 
       settle: ({ q }) => {
@@ -222,12 +125,11 @@ export function S8Capabilities() {
       ref={rootRef}
       id="capabilities"
       aria-labelledby="capabilities-heading"
-      className="relative isolate overflow-hidden bg-navy py-section text-white md:h-[var(--vh)] md:py-0"
+      className="relative isolate overflow-hidden bg-navy py-section text-white"
     >
       <RedLine id="capabilities" driven onStrands={onStrands} />
 
-      {/* Heading, fixed to the frame. The services move past it. */}
-      <div className="shell relative z-30 md:absolute md:inset-x-0 md:top-0 md:pt-24">
+      <div className="shell relative z-30">
         <header className="flex flex-col gap-3">
           <Eyebrow tone="white">{capabilities.eyebrow}</Eyebrow>
           <h2 id="capabilities-heading" className="text-h2 uppercase">
@@ -236,42 +138,24 @@ export function S8Capabilities() {
         </header>
       </div>
 
-      {/* The six valves, seated on the header pipe. */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 z-20 hidden md:block"
-        style={{ top: `${MANIFOLD_HEADER_Y * 100}%` }}
-      >
-        {MANIFOLD_VALVE_X.map((x, i) => (
-          <div
-            key={i}
-            className="absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${x * 100}%` }}
-          >
-            <ManifoldValve />
-          </div>
-        ))}
-      </div>
 
       {/*
-        The stage. On desktop it is a fixed box between the valve drops and the
-        foot of the frame, with all six panels stacked absolutely inside it so
-        one can wipe out while the next builds. On mobile it is ordinary flow.
+        Six capabilities, one after another down the page. They used to be
+        stacked absolutely and cross-faded by a 500vh pin, which meant only the
+        one at the current scroll offset existed — the rest were invisible and
+        unreachable. They are a list, so they are laid out as one.
       */}
-      <div
-        className="relative z-10 md:absolute md:inset-x-0"
-        style={{ top: `${MANIFOLD_DROP_Y * 100}%`, bottom: '8%' }}
-      >
-        <div className="shell flex flex-col gap-16 md:relative md:block md:h-full md:gap-0">
+      <div className="relative z-10 mt-14 md:mt-20">
+        <div className="shell flex flex-col gap-16 md:gap-24">
           {capabilities.items.map((capability, i) => (
             <article
               key={capability.id}
               id={capability.id}
               data-capability-panel
               data-step={i}
-              className="relative border-t border-white/10 pt-10 md:absolute md:inset-0 md:border-t-0 md:pt-0"
+              className="relative border-t border-white/12 pt-10 md:pt-12"
             >
-              <div className="grid h-full gap-x-10 gap-y-8 md:content-start lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+              <div className="grid gap-x-10 gap-y-8 md:items-center lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
                 <div className="flex flex-col gap-5">
                   <p
                     aria-hidden="true"

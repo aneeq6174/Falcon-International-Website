@@ -6,10 +6,9 @@
  *
  * ── How continuity is guaranteed ──────────────────────────────────────────
  *
- * The line is not one enormous DOM path. Pinned sections mean document scroll
- * does not map linearly to on-screen position, so a single page-height path
- * cannot stay glued to the content. Instead each section owns one segment, and
- * continuity is enforced by contract:
+ * The line is not one enormous DOM path — a single page-height path cannot stay
+ * glued to sections that grow and reflow independently. Instead each section
+ * owns one segment, and continuity is enforced by contract:
  *
  *     segment[i].exitX  MUST EQUAL  segment[i + 1].entryX
  *
@@ -24,7 +23,7 @@
  * section with `preserveAspectRatio="none"`. It does not work, for two reasons
  * that only show up once the line is on screen:
  *
- *   1. Non-uniform scale distorts every curve. Sections here range from ~100vh
+ *   1. Non-uniform scale distorts every curve. Section heights vary widely,
  *      to 600vh, so a corner authored as a quarter-circle renders as a smeared
  *      ellipse in the tall ones. On a site whose whole claim is precision, that
  *      is the wrong kind of wrong.
@@ -43,14 +42,11 @@
  *
  * ── What each phase owns ──────────────────────────────────────────────────
  *
- * Phase 1 (this file) ships the SPINE: one continuous route per section with
- * correct entry/exit geometry, drawn by scrubbed stroke-dashoffset.
- *
- * Later phases replace individual node lists with the full states in the
- * brief's §2 table (branching into four stats, coiling into the values grid,
- * the manifold's six valves, redrawing as the falcon). Those edits must preserve
- * `entryX` and `exitX`, and `assertContinuity()` exists to catch it when they
- * do not.
+ * Each segment declares a SPINE: one continuous route with correct entry/exit
+ * geometry, drawn by stroke-dashoffset. A segment may also declare a measured
+ * elaboration of that spine — branching into the four statistics, coiling
+ * through the values grid, becoming the timeline's rail. Those must preserve
+ * `entryX` and `exitX`; `assertContinuity()` catches it when they do not.
  */
 
 /** The one red. Structural only — the line, key numerals, rules and CTAs. */
@@ -280,26 +276,50 @@ export const glanceStrands: StrandBuilder = ({ width, height, section, host }) =
 export const JOURNEY_GROUND_Y = 0.72;
 
 /**
- * S3's line: down the centre, then it IS the ground.
+ * S3's line: it becomes the timeline's rail.
  *
- * The long horizontal run is NOT here. It lives inside the section's world
- * container because it has to travel with the camera, and it carries the three
- * effects the brief hangs on it — the charge lighting it white in 2016, the warm
- * gold at the solar array in 2024, the thickening into armoured cable in 2026.
+ * The section is a vertical list of fourteen dated milestones, and the line runs
+ * down the left of that list so each milestone's top rule meets it as a tick.
  *
- * What this contributes is the two stubs that join that moving ground to the
- * sections above and below. The entry stub always meets the ground because the
- * ground spans the entire world; the exit stub is drawn only at the very end,
- * once the camera has stopped travelling.
+ * The rail's x is MEASURED off the list element rather than guessed, because the
+ * list is padded away from the line by a fixed amount in CSS. If this used a
+ * fraction instead, one change to that padding would silently put the line
+ * through the middle of the years. Measuring means the two cannot disagree.
  *
- * Below the breakpoint there is no camera and no horizontal world, so this
- * declines and the plain vertical spine is used instead.
+ * It enters and leaves at the centre — `entryX`/`exitX` are 0.5 and the segments
+ * above and below meet it there — so the excursion to the left and back is part
+ * of the strand, not a break in the line.
  */
-export const journeyStrands: StrandBuilder = ({ width }) => {
-  if (width < 768) return [];
+export const journeyStrands: StrandBuilder = ({ width, height, section, host }) => {
+  if (!section || width < 768 || height <= 0) return [];
+
+  const list = section.querySelector<HTMLElement>('[data-journey-rail]');
+  if (!list) return [];
+
+  const hostRect = host.getBoundingClientRect();
+  const railX = (list.getBoundingClientRect().left - hostRect.left) / width;
+  // A rail outside the middle band means an unexpected layout; take the spine.
+  if (!(railX > 0.02 && railX < 0.45)) return [];
+
+  const top = (list.getBoundingClientRect().top - hostRect.top) / height;
+  const enter = Math.min(Math.max(top, 0.06), 0.4);
+
+  // Right-angle elbows, not a diagonal. Everywhere else on this page the line
+  // reads as pipework or conduit; a long swooping diagonal reads as decoration
+  // and belongs to a different site.
   return [
-    { id: 'entry', nodes: [p(0.5, 0), p(0.5, JOURNEY_GROUND_Y)], heavy: true },
-    { id: 'exit', nodes: [p(0.5, JOURNEY_GROUND_Y), p(0.5, 1)], heavy: true },
+    {
+      id: 'rail',
+      heavy: true,
+      nodes: [
+        p(0.5, 0),
+        p(0.5, enter),
+        p(railX, enter),
+        p(railX, 0.95),
+        p(0.5, 0.95),
+        p(0.5, 1),
+      ],
+    },
   ];
 };
 
@@ -433,38 +453,24 @@ export const MANIFOLD_DROP_Y = 0.35;
 export const MANIFOLD_VALVE_X = [0.185, 0.315, 0.445, 0.575, 0.705, 0.835];
 
 /**
- * S8's line: a header pipe with six valves feeding six services.
+ * S8's line: a riser down the outside of the six services.
  *
- * The header is drawn once at the start. Each branch is its own strand so a
- * scroll step can charge exactly one of them — red flowing down to the service
- * whose valve just opened — and they stay open as the reader goes, so by the
- * last step the manifold is visibly feeding all six.
- *
- * Below the breakpoint the services stack as plain panels with no manifold
- * above them, so this declines and the vertical spine is used instead.
+ * This was a header pipe with six valves, each branch charging as its service
+ * came up. That only worked while the six panels were stacked in one pinned
+ * frame and revealed one at a time. They are now an ordinary list down the page,
+ * so a manifold has nothing to feed: the line runs down beside them instead and
+ * returns to centre to hand off to S9.
  */
 export const capabilitiesStrands: StrandBuilder = ({ width }) => {
   if (width < 768) return [];
-
-  const hY = MANIFOLD_HEADER_Y;
-
-  const strands: LineStrand[] = [
-    // In at the top left, elbow, then the header runs the full width.
-    { id: 'header', nodes: [p(0.08, 0), p(0.08, hY), p(0.92, hY)], heavy: true },
+  return [
+    {
+      id: 'riser',
+      heavy: true,
+      // Elbows rather than diagonals — see journeyStrands for why.
+      nodes: [p(0.5, 0), p(0.5, 0.05), p(0.08, 0.05), p(0.08, 0.95), p(0.5, 0.95), p(0.5, 1)],
+    },
   ];
-
-  MANIFOLD_VALVE_X.forEach((x, i) => {
-    strands.push({ id: `branch-${i}`, nodes: [p(x, hY), p(x, MANIFOLD_DROP_Y)] });
-  });
-
-  // Down the right-hand side and back to centre for the hand-off to S9.
-  strands.push({
-    id: 'trunk-out',
-    nodes: [p(0.92, hY), p(0.92, 0.92), p(0.5, 0.92), p(0.5, 1)],
-    heavy: true,
-  });
-
-  return strands;
 };
 
 /* ------------------------------------------------------------------ */
@@ -964,14 +970,3 @@ export function assertContinuity(segments: LineSegment[] = SEGMENTS): void {
   }
 }
 
-/**
- * Scrub window for a segment's draw.
- *
- * The line is drawn slightly ahead of the reader — it reaches down into the
- * section below before that section's content arrives, which is what makes the
- * page feel like one continuous route rather than a stack of blocks.
- */
-export const DRAW_WINDOW = {
-  start: 'top bottom',
-  end: 'bottom 35%',
-} as const;

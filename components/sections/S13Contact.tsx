@@ -37,6 +37,7 @@ import { FalconMark } from '@/components/scenes/FalconMark';
 import { Button, Eyebrow } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
 import { CONTACT_MARK_Y, hideStrand, revealStrand } from '@/lib/redline';
+import { guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { contact, org, whatsapp } from '@/content/site';
 
@@ -149,56 +150,24 @@ export function S13Contact() {
         strands.forEach(hideStrand);
 
         /* ---- Mobile: no pin. One reveal on entry. ---------------------- */
-        if (conditions.mobile) {
-          gsap.to(strands, {
-            strokeDashoffset: 0,
-            ease: 'none',
-            scrollTrigger: { trigger: root, start: 'top bottom', end: 'bottom 60%', scrub: true },
-          });
-          const tl = gsap.timeline({
-            scrollTrigger: { trigger: root, start: 'top 72%', once: true },
-          });
-          tl.to(body, { scaleY: 1, opacity: 1, duration: 0.5, ease: 'power4.out' }, 0)
-            .to(
-              wings,
-              { scaleX: 1, opacity: 1, duration: 0.6, ease: 'power4.out', stagger: 0.1 },
-              0.3,
-            )
-            .to(word, { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }, 0.8)
-            .to(panel, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 1.0);
-          return;
-        }
-
-        /* ---- Desktop: one master trigger, 150vh of pinned scrub -------- */
-        const tl = gsap.timeline({
-          defaults: { ease: 'none' },
-          scrollTrigger: {
-            trigger: root,
-            start: 'top top',
-            end: '+=150%',
-            pin: true,
-            pinSpacing: true,
-            anticipatePin: 1,
-            scrub: 1,
-          },
+        gsap.to(strands, {
+          strokeDashoffset: 0,
+          ease: 'power1.inOut',
+          scrollTrigger: { trigger: root, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          duration: 0.9,
         });
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: root, start: 'top 72%', once: true, onEnter: guaranteeReveal },
+        });
+        tl.to(body, { scaleY: 1, opacity: 1, duration: 0.5, ease: 'power4.out' }, 0)
+          .to(
+            wings,
+            { scaleX: 1, opacity: 1, duration: 0.6, ease: 'power4.out', stagger: 0.1 },
+            0.3,
+          )
+          .to(word, { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }, 0.8)
+          .to(panel, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 1.0);
 
-        // The line rises to meet the mark.
-        tl.to(strands, { strokeDashoffset: 0, duration: 0.12 }, 0);
-
-        // The mark redraws out of it: body, wings, wordmark.
-        tl.to(body, { scaleY: 1, opacity: 1, duration: 0.16, ease: 'power4.out' }, BODY_AT);
-        tl.to(
-          wings,
-          { scaleX: 1, opacity: 1, duration: 0.18, ease: 'power4.out', stagger: 0.05 },
-          WINGS_AT,
-        );
-        tl.to(word, { opacity: 1, scale: 1, duration: 0.14, ease: 'power2.out' }, WORD_AT);
-
-        // Only once the mark is complete.
-        tl.to(panel, { opacity: 1, y: 0, duration: 0.2, ease: 'power2.out' }, PANEL_AT);
-
-        tl.set({}, {}, 1);
       },
 
       settle: ({ q }) => {
@@ -217,22 +186,21 @@ export function S13Contact() {
       ref={rootRef}
       id="contact"
       aria-labelledby="contact-heading"
-      className="relative isolate overflow-hidden bg-navy pt-section text-white md:h-[var(--vh)] md:pt-0"
+      className="relative isolate overflow-hidden bg-navy py-section text-white"
     >
       <RedLine id="contact" driven onStrands={onStrands} />
 
       {/* The mark, where the line resolves. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 z-10 hidden justify-center md:flex"
-        style={{ top: '7%', height: '27%' }}
+        className="pointer-events-none relative z-10 mb-12 hidden h-32 justify-center md:flex lg:h-40"
       >
         <FalconMark className="h-full w-auto" />
       </div>
 
       <div
         data-contact-panel
-        className="shell relative z-20 flex flex-col gap-10 md:absolute md:inset-x-0 md:bottom-0 md:gap-6 md:pb-4"
+        className="shell relative z-20 flex flex-col gap-10"
       >
         <header className="flex flex-col gap-2">
           <Eyebrow tone="white">{contact.eyebrow}</Eyebrow>

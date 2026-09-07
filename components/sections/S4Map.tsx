@@ -33,6 +33,7 @@ import {
   resetCounters,
   settleCounters,
   settleScene,
+  guaranteeReveal,
 } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { map } from '@/content/site';
@@ -79,87 +80,28 @@ export function S4Map() {
         };
 
         /* ---- Mobile: no pin, no scrub. One reveal on entry. ------------ */
-        if (conditions.mobile) {
-          strands.forEach(hideStrand);
-          gsap.to(strands, {
-            strokeDashoffset: 0,
-            ease: 'none',
-            scrollTrigger: { trigger: root, start: 'top bottom', end: 'bottom 35%', scrub: true },
-          });
-
-          resetMap();
-          resetCounters(counters);
-
-          const tl = gsap.timeline({
-            scrollTrigger: { trigger: mapRoot, start: 'top 78%', once: true },
-          });
-          buildScene(tl, mapRoot, 0, 0.7);
-          tl.to(hq, { scale: 1, opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.5)
-            .to(routes, { strokeDashoffset: 0, duration: 0.5, stagger: 0.12 }, 0.7)
-            .to(pins, { scale: 1, opacity: 1, duration: 0.3, stagger: 0.12 }, 0.95)
-            .to(arcs, { opacity: 1, duration: 0.4 }, 1.3)
-            .to(arcs, { strokeDashoffset: -48, duration: 1.4, ease: 'none' }, 1.3);
-          counters.forEach((c, i) => tl.add(countTween(c, 1.1), 0.95 + i * 0.12));
-          return;
-        }
-
-        /* ---- Desktop: one master trigger, 150vh of pinned scrub -------- */
         strands.forEach(hideStrand);
-        const entry = strands.find((s) => s.dataset.strand === 'entry');
-        const exit = strands.find((s) => s.dataset.strand === 'exit');
+        gsap.to(strands, {
+          strokeDashoffset: 0,
+          ease: 'power1.inOut',
+          scrollTrigger: { trigger: root, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          duration: 0.9,
+        });
 
         resetMap();
         resetCounters(counters);
 
         const tl = gsap.timeline({
-          defaults: { ease: 'none' },
-          scrollTrigger: {
-            trigger: root,
-            start: 'top top',
-            end: '+=150%',
-            pin: true,
-            pinSpacing: true,
-            anticipatePin: 1,
-            scrub: 1,
-          },
+          scrollTrigger: { trigger: mapRoot, start: 'top 78%', once: true, onEnter: guaranteeReveal },
         });
+        buildScene(tl, mapRoot, 0, 0.7);
+        tl.to(hq, { scale: 1, opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.5)
+          .to(routes, { strokeDashoffset: 0, duration: 0.5, stagger: 0.12 }, 0.7)
+          .to(pins, { scale: 1, opacity: 1, duration: 0.3, stagger: 0.12 }, 0.95)
+          .to(arcs, { opacity: 1, duration: 0.4 }, 1.3)
+          .to(arcs, { strokeDashoffset: -48, duration: 1.4, ease: 'none' }, 1.3);
+        counters.forEach((c, i) => tl.add(countTween(c, 1.1), 0.95 + i * 0.12));
 
-        // The map draws itself.
-        buildScene(tl, mapRoot, MAP_DRAW.at, MAP_DRAW.dur);
-
-        // The line arrives and plants the head office.
-        if (entry) tl.to(entry, { strokeDashoffset: 0, duration: 0.14 }, 0.16);
-        tl.to(hq, { scale: 1, opacity: 1, duration: 0.06, ease: 'power4.out' }, HQ_AT);
-        // One slow breath, not a repeating pulse — this is scrubbed, so a loop
-        // would fight the reader for control of it.
-        tl.to(pulse, { scale: 1.6, opacity: 0, duration: 0.34, ease: 'power2.out' }, HQ_AT + 0.04);
-
-        // Routes fire outward; each pin and counter lands with its own route.
-        routes.forEach((route, i) => {
-          const at = routeAt(i);
-          tl.to(route, { strokeDashoffset: 0, duration: ROUTE_DUR }, at);
-          if (pins[i]) {
-            tl.to(
-              pins[i],
-              { scale: 1, opacity: 1, duration: 0.05, ease: 'power4.out' },
-              at + ROUTE_DUR * 0.85,
-            );
-          }
-          if (counters[i]) {
-            tl.add(countTween(counters[i], 0.1), at + ROUTE_DUR * 0.85);
-          }
-        });
-
-        // Beyond Pakistan.
-        tl.to(arcs, { opacity: 1, duration: 0.05 }, ARCS_AT).to(
-          arcs,
-          { strokeDashoffset: -48, duration: 0.16, ease: 'none' },
-          ARCS_AT,
-        );
-
-        if (exit) tl.to(exit, { strokeDashoffset: 0, duration: 0.06 }, 0.93);
-
-        tl.set({}, {}, 1);
       },
 
       settle: ({ q }) => {
@@ -180,7 +122,7 @@ export function S4Map() {
       ref={rootRef}
       id="where-we-work"
       aria-labelledby="map-heading"
-      className="relative isolate overflow-hidden bg-navy py-section text-white md:flex md:h-[var(--vh)] md:items-center md:pb-8 md:pt-20"
+      className="relative isolate overflow-hidden bg-navy py-section text-white"
     >
       <RedLine id="map" driven onStrands={onStrands} />
 

@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * S1 — Hero. Pinned for 150vh; the plant constructs itself on scrub.
+ * S1 — Hero. The plant constructs itself once, as the page opens.
  *
  * ── The build ─────────────────────────────────────────────────────────────
  *
@@ -33,6 +33,7 @@ import { PlantScene } from '@/components/scenes/PlantScene';
 import { Button, TermRun } from '@/components/ui/primitives';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import { hideStrand, revealStrand } from '@/lib/redline';
+import { guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { hero, org } from '@/content/site';
 
@@ -91,57 +92,23 @@ export function S1Hero() {
          */
 
         /* ---- Mobile: no pin, no scrub. One on-enter build. ------------- */
-        if (conditions.mobile) {
-          const tl = gsap.timeline({
-            scrollTrigger: { trigger: rootRef.current, start: 'top 75%', once: true },
-          });
-
-          drawables.forEach(({ paths }, i) => {
-            tl.to(
-              paths,
-              { strokeDashoffset: 0, ease: 'power2.out', duration: 0.5, stagger: 0.012 },
-              i * 0.18,
-            );
-          });
-
-          tl.to(fillGroup, { opacity: 1, duration: 0.5 }, 0.7)
-            .to(strokeGroup, { opacity: STROKE_RESTING_OPACITY, duration: 0.5 }, 0.7)
-            .to(glow, { opacity: 1, yPercent: 0, duration: 0.6 }, 0.65)
-            .to(linePaths, { strokeDashoffset: 0, ease: 'power2.out', duration: 0.5 }, 0.95);
-
-          return;
-        }
-
-        /* ---- Desktop: one master trigger, 150vh of pinned scrub -------- */
         const tl = gsap.timeline({
-          defaults: { ease: 'none' },
-          scrollTrigger: {
-            trigger: rootRef.current,
-            start: 'top top',
-            end: '+=150%',
-            pin: true,
-            pinSpacing: true,
-            anticipatePin: 1,
-            scrub: 1,
-          },
+          scrollTrigger: { trigger: rootRef.current, start: 'top 75%', once: true, onEnter: guaranteeReveal },
         });
 
-        STAGES.forEach(({ part, at, duration, stagger }, i) => {
+        drawables.forEach(({ paths }, i) => {
           tl.to(
-            drawables[i].paths,
-            { strokeDashoffset: 0, duration, stagger },
-            at,
+            paths,
+            { strokeDashoffset: 0, ease: 'power2.out', duration: 0.5, stagger: 0.012 },
+            i * 0.18,
           );
-          void part;
         });
 
-        // Blueprint resolves into solid structure.
-        tl.to(fillGroup, { opacity: 1, duration: 0.22 }, CROSSFADE_AT)
-          .to(strokeGroup, { opacity: STROKE_RESTING_OPACITY, duration: 0.22 }, CROSSFADE_AT)
-          // Horizon glow rises behind. transform + opacity only.
-          .to(glow, { opacity: 1, yPercent: 0, duration: 0.3 }, CROSSFADE_AT - 0.02)
-          // The red line is born at the base and heads for S2.
-          .to(linePaths, { strokeDashoffset: 0, duration: 0.18 }, 0.82);
+        tl.to(fillGroup, { opacity: 1, duration: 0.5 }, 0.7)
+          .to(strokeGroup, { opacity: STROKE_RESTING_OPACITY, duration: 0.5 }, 0.7)
+          .to(glow, { opacity: 1, yPercent: 0, duration: 0.6 }, 0.65)
+          .to(linePaths, { strokeDashoffset: 0, ease: 'power2.out', duration: 0.5 }, 0.95);
+
       },
 
       settle: ({ q }) => {

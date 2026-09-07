@@ -20,7 +20,7 @@
 import { RedLine } from '@/components/RedLine';
 import { Eyebrow } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
-import { splitLines } from '@/lib/scene';
+import { splitLines, guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { missionVision } from '@/content/site';
 
@@ -48,7 +48,7 @@ export function S6MissionVision() {
         gsap.set(head, { opacity: 0, y: 14 });
 
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: root, start: 'top 68%', once: true },
+          scrollTrigger: { trigger: root, start: 'top 68%', once: true, onEnter: guaranteeReveal },
         });
 
         tl.to(head, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, i * PANEL_OFFSET).to(

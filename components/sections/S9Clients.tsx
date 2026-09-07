@@ -32,6 +32,7 @@ import {
   sectionTone,
 } from '@/components/ui/primitives';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { clients } from '@/content/site';
 
@@ -66,7 +67,7 @@ export function S9Clients() {
         duration: 0.7,
         ease: 'power2.out',
         stagger: 0.03,
-        scrollTrigger: { trigger: root, start: 'top 78%', once: true },
+        scrollTrigger: { trigger: root, start: 'top 78%', once: true, onEnter: guaranteeReveal },
       });
 
       // Then the rails drift, alternate directions.

@@ -22,7 +22,7 @@ import {
   sectionTone,
 } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
-import { SCENE_BUILD_SELECTOR, settleScene } from '@/lib/scene';
+import { SCENE_BUILD_SELECTOR, settleScene, guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { values } from '@/content/site';
 
@@ -43,7 +43,7 @@ export function S5Values() {
         duration: 0.7,
         ease: 'power2.out',
         stagger: STAGGER,
-        scrollTrigger: { trigger: root, start: 'top 72%', once: true },
+        scrollTrigger: { trigger: root, start: 'top 72%', once: true, onEnter: guaranteeReveal },
       });
     },
 

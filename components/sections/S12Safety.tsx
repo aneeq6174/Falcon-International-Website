@@ -17,7 +17,7 @@
  * over-animating it would destroy it: the confidence is in the stillness.
  *
  * The one deliberate silence is between the ring closing and the counter
- * starting. It is a gap in the timeline, so under scrub the reader keeps
+ * starting. It is a gap in the timeline, so the reader keeps
  * scrolling and nothing moves — the same device as S2's beat, used here on the
  * fact that matters most.
  *
@@ -33,7 +33,7 @@ import { RedLine } from '@/components/RedLine';
 import { Eyebrow } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
 import { hideStrand, revealStrand } from '@/lib/redline';
-import { countTween, formatCount, readCounters } from '@/lib/scene';
+import { countTween, formatCount, readCounters, guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { safety } from '@/content/site';
 
@@ -81,53 +81,18 @@ export function S12Safety() {
         gsap.set(points, { opacity: 0, y: 10 });
 
         /* ---- Mobile: no pin. The ring draws on the section's own travel. -- */
-        if (conditions.mobile) {
-          gsap.to(strands, {
-            strokeDashoffset: 0,
-            ease: 'none',
-            scrollTrigger: { trigger: root, start: 'top bottom', end: 'bottom 45%', scrub: true },
-          });
-          const tl = gsap.timeline({
-            scrollTrigger: { trigger: root, start: 'top 55%', once: true },
-          });
-          counters.forEach((c) => tl.add(countTween(c, 1.4), 0));
-          tl.to(points, { opacity: 1, y: 0, duration: 0.4, stagger: 0.4 }, 1.5);
-          return;
-        }
-
-        /* ---- Desktop: one master trigger, 200vh of pinned scrub -------- */
+        gsap.to(strands, {
+          strokeDashoffset: 0,
+          ease: 'power1.inOut',
+          scrollTrigger: { trigger: root, start: 'top 85%', once: true, onEnter: guaranteeReveal },
+          duration: 0.9,
+        });
         const tl = gsap.timeline({
-          defaults: { ease: 'none' },
-          scrollTrigger: {
-            trigger: root,
-            start: 'top top',
-            end: '+=200%',
-            pin: true,
-            pinSpacing: true,
-            anticipatePin: 1,
-            scrub: 1,
-          },
+          scrollTrigger: { trigger: root, start: 'top 55%', once: true, onEnter: guaranteeReveal },
         });
+        counters.forEach((c) => tl.add(countTween(c, 1.4), 0));
+        tl.to(points, { opacity: 1, y: 0, duration: 0.4, stagger: 0.4 }, 1.5);
 
-        // The line curves and closes into the zero.
-        tl.to(strands, { strokeDashoffset: 0, duration: RING.dur }, RING.at);
-
-        // — the silence —
-
-        // The counter runs, and stops.
-        counters.forEach((c) => tl.add(countTween(c, 0.11), COUNTER_AT));
-
-        // Then the points, one by one. 400ms apart in the brief; here that is
-        // scroll distance, which is the same intent under scrub.
-        points.forEach((point, i) => {
-          tl.to(
-            point,
-            { opacity: 1, y: 0, duration: 0.05, ease: 'power2.out' },
-            POINTS_AT + i * POINT_STAGGER,
-          );
-        });
-
-        tl.set({}, {}, 1);
       },
 
       settle: ({ q }) => {
@@ -149,7 +114,7 @@ export function S12Safety() {
       ref={rootRef}
       id="safety"
       aria-labelledby="safety-heading"
-      className="relative isolate flex min-h-[var(--vh)] flex-col justify-center overflow-hidden bg-navy py-section text-white md:h-[var(--vh)] md:py-0"
+      className="relative isolate overflow-hidden bg-navy py-section text-white"
     >
       <RedLine id="safety" driven onStrands={onStrands} />
 
@@ -167,10 +132,9 @@ export function S12Safety() {
         against the SECTION, not against a shell whose height collapses once its
         children go absolute.
       */}
-      <div className="relative z-10 flex flex-col items-center gap-8 text-center md:absolute md:inset-0 md:block md:gap-0">
+      <div className="relative z-10 flex flex-col items-center gap-12 text-center md:gap-16">
         <div
-          className="shell flex flex-col items-center gap-3 md:absolute md:inset-x-0 md:-translate-y-1/2"
-          style={{ top: '44%' }}
+          className="shell flex flex-col items-center gap-3"
         >
           <Eyebrow tone="white">{safety.eyebrow}</Eyebrow>
           <h2
@@ -194,8 +158,7 @@ export function S12Safety() {
         </div>
 
         <div
-          className="shell flex flex-col items-center gap-6 md:absolute md:inset-x-0"
-          style={{ top: '78%' }}
+          className="shell flex flex-col items-center gap-6"
         >
           <p className="max-w-2xl text-sm leading-relaxed text-white/65">{safety.sub}</p>
 

@@ -1,4 +1,4 @@
-# Falcon International — scrollytelling site
+# Falcon International — marketing site
 
 Single-page marketing site for Falcon International, industrial contractor, Lahore, est. 1997.
 Built against `falcon-website-claude-code-brief.md`. Read that first — it is the spec.
@@ -16,8 +16,8 @@ pure static export.
 
 | Phase | Scope | Status |
 |---|---|---|
-| 0 | Scaffold, tokens, fonts, Lenis, GSAP, `useScrollScene`, all copy, 14 static sections | **Done** |
-| 1 | The red line system — continuous path, scrubbed draw, hand-off geometry | **Done** |
+| 0 | Scaffold, tokens, fonts, GSAP, `useScrollScene`, all copy, 14 static sections | **Done** |
+| 1 | The red line system — continuous path, draw-on-entry, hand-off geometry | **Done** |
 | 2 | S1 Hero + S2 At a Glance | **Done** |
 | 3 | S3 The Journey ★ | **Done** |
 | 4 | S8 Capabilities ★ | **Done** |
@@ -30,11 +30,50 @@ two centrepieces; the rest followed. **All seven phases are complete.** What is
 left is listed under Open items — all of it needs the client, a real device, or a
 hosting decision.
 
+## The motion model — read this first
+
+**Nothing on this page pins, and nothing scrubs.** Every scene plays ONCE when it
+comes into view, over its own short duration, and leaves the result on screen.
+
+It did not start this way. Seven sections were pinned and scrubbed — S3 alone held
+600vh — which added up to **1,850vh, eighteen screen-heights, of scrolling that
+produced no downward movement.** Worse, scrubbing ties a sentence to one exact
+scroll offset: read it at a natural speed and it flies past, and getting it back
+means hunting for the pixel it lives at. Fourteen dated milestones went by in a
+blur nobody could stop.
+
+That is a design mistake, not a tuning problem, and the fix was to delete the
+mechanism rather than slow it down:
+
+| Was | Is |
+|---|---|
+| S3 Journey — 600vh pin, horizontal camera | vertical timeline, red line as its rail |
+| S8 Capabilities — 500vh pin, six panels cross-faded in place | six panels, one after another |
+| S1/S2/S4/S12/S13 — 100–200vh pins | ordinary sections |
+| Red line scrubbed (un-drew on scroll up) | draws once, stays drawn |
+| Lenis smooth scroll | native scrolling |
+
+**The rule to keep:** if a reader has to scroll precisely to see something, it is
+broken. Motion is punctuation. It must never be the thing that makes content exist.
+
+### Reveals must not be load-bearing
+
+Every reveal starts its content at `opacity: 0`, which makes the animation
+load-bearing — if it does not run, the content is not un-animated, it is
+**invisible**. GSAP drives tweens off `requestAnimationFrame`, and rAF can be
+starved (a background tab, an occluded window, a device under load). This was not
+theoretical: the contact form was caught sitting at `opacity: 0` with its trigger
+active and its tween at progress 0.
+
+So every play-once trigger carries `onEnter: guaranteeReveal` (`lib/scene.ts`),
+which uses `setTimeout` — not rAF — to force the finished state after 2.5s if the
+animation has not got there on its own. **Add it to any new reveal.**
+
 ## Architecture
 
 ```
-/app        layout.tsx (fonts, metadata, JSON-LD, Lenis) · page.tsx (composes S0–S13) · globals.css
-/components sections/S0…S13 (one file each) · RedLine.tsx · SmoothScroll.tsx · ui/
+/app        layout.tsx (fonts, metadata, JSON-LD) · page.tsx (composes S0–S13) · globals.css
+/components sections/S0…S13 (one file each) · RedLine.tsx · ui/
 /lib        gsap.ts (single registration point) · useScrollScene.ts · redline.ts · scene.ts
 /content    site.ts — ALL copy
 ```
@@ -49,9 +88,9 @@ causes duplicate-instance bugs and silent refresh failures. That module also set
 easing default and owns the debounced `requestRefresh()`.
 
 **Animate through `useScrollScene`.** It is the single place that handles reduced motion,
-the sub-768px pin/scrub ban, and cleanup. Its `settle` callback is how a section declares its
-resting appearance — that callback is why the reduced-motion site looks deliberate rather than
-like the animated site with the motion torn out.
+one motion path at every width, and cleanup. Its `settle` callback is how a section declares
+its resting appearance — that callback is why the reduced-motion site looks deliberate rather
+than like the animated site with the motion torn out.
 
 ### The red line
 
@@ -438,10 +477,6 @@ jumps the reader's scroll position — worse than the cost it saves. An inactive
 ScrollTrigger only compares scroll offsets; the scrubbed tweens do not update
 while off-screen, so the runtime cost is already near zero. Revisit in Phase 7
 with the profiler rather than reinstating it blind.
-
-**On mobile the red spine runs down the centre of the milestone copy** in S3.
-It renders behind the text and stays legible, but it is site-wide spine
-placement rather than an S3 issue — worth resolving in the Phase 7 mobile pass.
 
 **LCP and sustained 60fps are the two budget items still unverified.** Everything
 measurable here passes with room: JS is 169 kB against 300 kB, and total page

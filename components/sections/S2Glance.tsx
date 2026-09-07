@@ -39,6 +39,7 @@ import {
   readCounters,
   resetCounters,
   settleCounters,
+  guaranteeReveal,
 } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { glance } from '@/content/site';
@@ -100,81 +101,23 @@ export function S2Glance() {
         const release = () => linePaths.forEach((p) => (p.style.willChange = 'auto'));
 
         /* ---- Mobile: no pin, no scrub. One on-enter reveal. ------------ */
-        if (conditions.mobile) {
-          const tl = gsap.timeline({
-            scrollTrigger: { trigger: rootRef.current, start: 'top 75%', once: true },
-            onStart: promote,
-            onComplete: release,
-          });
-
-          tl.to(linePaths, {
-            strokeDashoffset: 0,
-            ease: 'power2.out',
-            duration: 0.7,
-            stagger: 0.05,
-          });
-
-          counters.forEach((c, i) => {
-            tl.add(countTween(c, 1.2), 0.3 + i * 0.12);
-          });
-
-          return;
-        }
-
-        /* ---- Desktop: one master trigger, 100vh of pinned scrub -------- */
         const tl = gsap.timeline({
-          defaults: { ease: 'none' },
-          scrollTrigger: {
-            trigger: rootRef.current,
-            start: 'top top',
-            end: '+=100%',
-            pin: true,
-            pinSpacing: true,
-            anticipatePin: 1,
-            scrub: 1,
-            onEnter: promote,
-            onEnterBack: promote,
-            onLeave: release,
-            onLeaveBack: release,
-          },
+          scrollTrigger: { trigger: rootRef.current, start: 'top 75%', once: true, onEnter: guaranteeReveal },
+          onStart: promote,
+          onComplete: release,
         });
 
-        if (forked) {
-          tl.to(trunkIn!, { strokeDashoffset: 0, duration: T.trunkInDur }, T.trunkIn)
-            .to(
-              outs,
-              { strokeDashoffset: 0, duration: T.branchOutDur, stagger: T.branchStagger },
-              T.branchOut,
-            );
-        } else {
-          tl.to(linePaths, { strokeDashoffset: 0, duration: 0.4 }, 0);
-        }
+        tl.to(linePaths, {
+          strokeDashoffset: 0,
+          ease: 'power2.out',
+          duration: 0.7,
+          stagger: 0.05,
+        });
 
-        // Each statistic counts as its branch arrives. The fourth runs down to
-        // zero and then simply stops — the hold is the absence of anything after.
         counters.forEach((c, i) => {
-          tl.add(countTween(c, T.countDur), T.countStart + i * T.countStagger);
+          tl.add(countTween(c, 1.2), 0.3 + i * 0.12);
         });
 
-        if (forked) {
-          tl.to(
-            ins,
-            { strokeDashoffset: 0, duration: T.reuniteDur, stagger: T.branchStagger },
-            T.reunite,
-          );
-          if (collector) {
-            tl.to(
-              collector,
-              { strokeDashoffset: 0, duration: T.reuniteDur * 0.8 },
-              T.reunite + T.reuniteDur * 0.5,
-            );
-          }
-          tl.to(trunkOut!, { strokeDashoffset: 0, duration: T.trunkOutDur }, T.trunkOut);
-        }
-
-        // Holds the timeline open to a full 1.0 so the beat before the reunion
-        // is real scroll distance rather than being trimmed off the end.
-        tl.set({}, {}, 1);
       },
 
       settle: ({ q }) => {
@@ -193,7 +136,7 @@ export function S2Glance() {
       ref={rootRef}
       id="glance"
       aria-labelledby="glance-heading"
-      className={`${SECTION_SHELL} ${sectionTone.paper} flex min-h-[var(--vh)] flex-col justify-center`}
+      className={`${SECTION_SHELL} ${sectionTone.paper} flex flex-col justify-center py-section`}
     >
       <RedLine id="glance" driven onStrands={onStrands} />
 

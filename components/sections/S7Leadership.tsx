@@ -16,7 +16,7 @@
  *
  * The pull quote scales up from 0.94 with a short blur settling out. Blur is a
  * filter and therefore paint-heavy, so it runs ONCE on entry rather than being
- * scrubbed, and only over 4px. Everything else here is transform and opacity.
+ * played once on entry. Everything here is transform and opacity.
  */
 
 import { RedLine } from '@/components/RedLine';
@@ -28,6 +28,7 @@ import {
   sectionTone,
 } from '@/components/ui/primitives';
 import { gsap } from '@/lib/gsap';
+import { guaranteeReveal } from '@/lib/scene';
 import { useScrollScene } from '@/lib/useScrollScene';
 import { leadership } from '@/content/site';
 
@@ -48,7 +49,7 @@ export function S7Leadership() {
         gsap.to(cover, {
           scaleY: 0,
           ease: 'none',
-          scrollTrigger: { trigger: cover, start: 'top 82%', end: 'bottom 55%', scrub: true },
+          scrollTrigger: { trigger: cover, start: 'top 85%', once: true, onEnter: guaranteeReveal },
         });
       }
 
@@ -60,7 +61,7 @@ export function S7Leadership() {
           filter: 'blur(0px)',
           duration: 0.8,
           ease: 'power4.out',
-          scrollTrigger: { trigger: quote, start: 'top 82%', once: true },
+          scrollTrigger: { trigger: quote, start: 'top 82%', once: true, onEnter: guaranteeReveal },
         });
       }
 
@@ -72,7 +73,7 @@ export function S7Leadership() {
           duration: 0.6,
           ease: 'power2.out',
           stagger: 0.1,
-          scrollTrigger: { trigger: root, start: 'top 55%', once: true },
+          scrollTrigger: { trigger: root, start: 'top 55%', once: true, onEnter: guaranteeReveal },
         });
       }
     },

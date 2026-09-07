@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo, Inter } from 'next/font/google';
 import { S0Preloader } from '@/components/sections/S0Preloader';
-import { SmoothScroll } from '@/components/SmoothScroll';
 import { Nav } from '@/components/ui/Nav';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 import { meta, nav, org } from '@/content/site';
@@ -158,9 +157,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <S0Preloader />
         <Nav />
-        <SmoothScroll>
-          <main id="main">{children}</main>
-        </SmoothScroll>
+        <main id="main">{children}</main>
         <WhatsAppButton />
       </body>
     </html>

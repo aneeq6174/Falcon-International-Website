@@ -264,3 +264,28 @@ export function resetCounters(counters: Counter[]) {
     c.el.textContent = formatCount(c.from);
   });
 }
+
+/**
+ * Failsafe for a reveal that never gets to run.
+ *
+ * Every reveal on this page starts its content at `opacity: 0` and animates it
+ * in, which means the animation is load-bearing: if it does not run, the content
+ * is not merely un-animated, it is INVISIBLE. GSAP drives tweens off
+ * requestAnimationFrame, and rAF can be starved — a background tab, an occluded
+ * window, a device under load. Left alone, a reader can arrive at a section that
+ * simply is not there. That is unacceptable for a contact form.
+ *
+ * `setTimeout` does not depend on rAF. It is throttled in a background tab, but
+ * it still fires, so this guarantees the finished state arrives no matter what
+ * happens to the frame loop. In the normal case the animation has long since
+ * completed and this does nothing.
+ *
+ * Attach as a ScrollTrigger's `onEnter`.
+ */
+export function guaranteeReveal(self: { animation?: gsap.core.Animation | null }): void {
+  const anim = self.animation;
+  if (!anim) return;
+  setTimeout(() => {
+    if (anim.progress() < 1) anim.progress(1);
+  }, 2500);
+}

@@ -29,7 +29,7 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-behavior: auto; /* Lenis owns scrolling; never both. */
+    scroll-behavior: auto; /* Jumping the reader is never smoothed. */
   }
 
   body {
@@ -246,7 +246,7 @@
 /*                                                                     */
 /* The static site is the fallback, and it must look intentional and   */
 /* complete rather than like the animated site with the motion torn    */
-/* out. Pinning, scrubbing and Lenis are all disabled in JS; this      */
+/* out. All animation is disabled in JS as well; this rule is the      */
 /* block catches anything CSS-driven.                                  */
 /* ------------------------------------------------------------------ */
 
@@ -261,21 +261,4 @@
   }
 }
 
-/* Set by SmoothScroll when Lenis is not running (touch or reduced motion). */
-.native-scroll {
-  scroll-behavior: auto;
-}
 
-/* Lenis requires these while it is active. */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-
-.lenis.lenis-stopped {
-  overflow: hidden;
-}

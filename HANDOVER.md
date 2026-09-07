@@ -1,8 +1,14 @@
 # Falcon International — handover
 
-The site is built. All seven phases of `falcon-website-claude-code-brief.md` are
-complete: fourteen sections, the continuous red line, the two centrepieces, the
-preloader, and the mobile, reduced-motion and performance passes.
+The site is built. Fourteen sections, the continuous red line, the preloader, and
+the mobile, reduced-motion and performance passes.
+
+**One thing to know before you touch the animation:** nothing on this page pins
+and nothing scrubs. Every scene plays once when it comes into view and stays.
+It used to hold 1,850vh of pinned scrolling, which meant content flew past at a
+speed nobody could read and could only be recovered by scrolling to an exact
+pixel. If you are tempted to reintroduce a pinned section, read the motion-model
+section at the top of `README.md` first.
 
 This document is what someone else needs to take it from here. `README.md` is the
 engineering companion — architecture, the traps, and how to verify a scene.
@@ -140,17 +146,18 @@ allowed to overflow into the next column.
 
 ## Performance, measured
 
-Taken from the **production export**, not the dev bundle.
+Taken from the **production build**, not the dev bundle. Removing Lenis and
+every pinned timeline took first-load JS from 169 kB to 162 kB gzipped.
 
 | Budget (§6) | Target | Measured | |
 |---|---|---|---|
-| JS bundle | ≤ 300 kB gzipped | **169 kB** | ✅ |
+| JS bundle | ≤ 300 kB gzipped | **162 kB** | ✅ |
 | Total page weight | ≤ 3 MB | **~283 kB** gzipped (839 kB raw) | ✅ |
 | LCP, simulated Fast 3G | ≤ 2.5s | not measured | ⚠️ |
 | Sustained 60fps, 4× CPU throttle | 60fps | not measured | ⚠️ |
 
-19 requests. 549 kB JS raw, 82 kB fonts, **0 kB images** — there is not a single
-`<img>` on the page. The nav mark, the favicon and S13's closing reveal are all
+513 kB JS raw across 14 chunks, 82 kB fonts, **0 kB images** — there is not a
+single `<img>` on the page. The nav mark, the favicon and S13's closing reveal are all
 vector, which removed the 1.26 MB logo PNG from the critical path entirely.
 
 Zero elements carry `will-change` at rest, down from 54: `stroke-dashoffset` is
@@ -172,12 +179,14 @@ with room to spare.
 - One `h1`, heading order h1 → h2 → h3 → h4 with no skips.
 - JSON-LD `Organization` + `LocalBusiness` in the static HTML.
 - Skip-to-content link, visible focus rings, keyboard-operable filter and
-  expander. Pinned sections do not trap focus.
+  expander. Nothing pins, so nothing traps focus or hides content behind a
+  scroll offset.
 - Counting numerals are `aria-hidden` with the true value in an `sr-only`
   sibling, so a screen reader never reads a mid-animation number.
-- **Reduced motion is fully implemented and has been exercised**: no Lenis, no
-  pinning, no scrubbing, no counters — the complete static site, with every
-  figure at its final value.
+- **Reduced motion is fully implemented and has been exercised**: no animation
+  and no counters — the complete static site, with every figure at its final
+  value. Verified with `?reduced=1`: 0 ScrollTriggers, 0/24 line strands hidden,
+  0/262 artwork elements hidden, every counter final.
 
 ---
 
@@ -189,13 +198,6 @@ coordinates on a cos(latitude)-corrected projection, and its bounding box is
 to be. Jammu & Kashmir east of the Line of Control is drawn dashed and labelled
 disputed territory, which is both the convention on Pakistani maps and the factual
 position. **Worth a look from the client before launch.**
-
-**S3 is not lazy-mounted.** Brief §6 asks for S3 and S8 to `kill()` their
-timelines two viewports away. Killing a 600vh pin removes its spacer, changes
-document height and jumps the reader's scroll position — worse than the cost it
-saves. An inactive ScrollTrigger only compares scroll offsets and its tweens do
-not update off-screen, so the runtime cost is already near zero. Revisit with a
-profiler rather than reinstating it blind.
 
 **The day counter in S12** is recomputed on the client on every load, so it does
 not drift between deploys. The server-rendered value is the no-JS fallback and
