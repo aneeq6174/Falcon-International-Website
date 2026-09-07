@@ -134,7 +134,29 @@ founder's portrait and the two management portraits.
 
 Per brief §10, no stock photography was used and none was generated.
 
-### 5. A social card
+### 5. Finish the Google setup — needs you, not a developer
+
+The site now ships everything a crawler needs: `/sitemap.xml`, `/robots.txt`,
+canonical URLs, per-page titles and descriptions, and Organization +
+LocalBusiness + WebSite structured data carrying the company's `alternateName`
+variants ("Falcon International Pakistan", "Falcon International Lahore",
+"Falcon Intl") so a search for the bare name resolves here.
+
+Two things only the business owner can do, and neither is optional if you want
+to rank for your own name:
+
+1. **Google Search Console** — verify `falconinternational.net.pk`, then submit
+   `https://falconinternational.net.pk/sitemap.xml`. Until you do, Google finds
+   the site on its own schedule instead of yours.
+2. **Google Business Profile** — create one for the Lahore office. For a local
+   contractor this outranks almost everything else for a brand-name search, and
+   it is what produces the panel on the right of the results page.
+
+If you create social or directory profiles (LinkedIn, Facebook), send me the
+URLs — they go in the `sameAs` field of the structured data in
+`app/layout.tsx`, which Google leans on heavily for brand queries.
+
+### 6. A social card
 
 `falcon-logo.png` is still the Open Graph image. It is the raw logo at 1536×1024,
 not a 1200×630 card, so link previews will letterbox it. The page itself no longer

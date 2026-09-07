@@ -43,7 +43,7 @@ export function S5Values() {
         duration: 0.7,
         ease: 'power2.out',
         stagger: STAGGER,
-        scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
+        scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, onEnter: guaranteeReveal },
       });
     },
 
@@ -60,9 +60,9 @@ export function S5Values() {
       <RedLine id="values" />
 
       <SectionBody className="flex flex-col gap-14">
-        <Eyebrow as="h2" id="values-heading">
+        <h2 id="values-heading" className="text-h2 uppercase text-navy">
           {values.eyebrow}
-        </Eyebrow>
+        </h2>
 
         <ul data-values-grid className="grid grid-cols-2 gap-px bg-ink/10 lg:grid-cols-4">
           {values.items.map((value) => (

@@ -49,7 +49,7 @@ export function S11Quality() {
       gsap.set(q('[data-badge-bloom]'), { transformOrigin: '50% 50%', scale: 0.7, opacity: 0 });
 
       const tl = gsap.timeline({
-        scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
+        scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, onEnter: guaranteeReveal },
       });
 
       badges.forEach((badge, i) => {
@@ -99,9 +99,9 @@ export function S11Quality() {
 
       <SectionBody className="flex flex-col gap-12">
         <header className="flex max-w-3xl flex-col gap-6">
-          <Eyebrow as="h2" id="quality-heading">
+          <h2 id="quality-heading" className="text-h2 uppercase text-navy">
             {quality.eyebrow}
-          </Eyebrow>
+          </h2>
           <p className="text-h3 font-display font-semibold leading-snug tracking-tight text-navy">
             {quality.intro}
           </p>

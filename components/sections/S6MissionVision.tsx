@@ -48,7 +48,7 @@ export function S6MissionVision() {
         gsap.set(head, { opacity: 0, y: 14 });
 
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, onEnter: guaranteeReveal },
         });
 
         tl.to(head, { opacity: 1, y: 0, duration: 0.5, ease: 'power2.out' }, i * PANEL_OFFSET).to(
@@ -83,9 +83,9 @@ export function S6MissionVision() {
           className="flex flex-col justify-center gap-6 bg-navy px-6 py-section text-white md:px-10 lg:px-14"
         >
           <div data-mv-head className="flex flex-col gap-6">
-            <Eyebrow as="h2" tone="white" id="mission-heading">
+            <h2 id="mission-heading" className="text-h2 uppercase leading-none text-white">
               {missionVision.mission.eyebrow}
-            </Eyebrow>
+            </h2>
             <span aria-hidden="true" className="rule-red" />
           </div>
           <p
@@ -101,9 +101,9 @@ export function S6MissionVision() {
           className="flex flex-col justify-center gap-6 bg-paper px-6 py-section text-ink md:px-10 lg:px-14"
         >
           <div data-mv-head className="flex flex-col gap-6">
-            <Eyebrow as="h2" id="vision-heading">
+            <h2 id="vision-heading" className="text-h2 uppercase leading-none text-navy">
               {missionVision.vision.eyebrow}
-            </Eyebrow>
+            </h2>
             <span aria-hidden="true" className="rule-red" />
           </div>
           <p

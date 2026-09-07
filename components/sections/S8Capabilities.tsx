@@ -57,7 +57,6 @@ export function S8Capabilities() {
           scrollTrigger: {
             trigger: root,
             start: SECTION_REVEAL_START,
-            once: true,
             onEnter: guaranteeReveal,
           },
         });
@@ -69,7 +68,6 @@ export function S8Capabilities() {
             scrollTrigger: {
               trigger: card,
               start: ITEM_REVEAL_START,
-              once: true,
               onEnter: guaranteeReveal,
             },
           });

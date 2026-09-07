@@ -103,7 +103,7 @@ export function S2Glance() {
 
         /* One reveal on entry, at every width. Nothing pins, nothing scrubs. */
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: rootRef.current, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: rootRef.current, start: SECTION_REVEAL_START, onEnter: guaranteeReveal },
           onStart: promote,
           onComplete: release,
         });
@@ -142,9 +142,9 @@ export function S2Glance() {
       <RedLine id="glance" driven onStrands={onStrands} />
 
       <SectionBody className="flex flex-col gap-16">
-        <Eyebrow as="h2" id="glance-heading">
+        <h2 id="glance-heading" className="text-h2 uppercase text-navy">
           {glance.eyebrow}
-        </Eyebrow>
+        </h2>
 
         <div className="grid gap-x-10 gap-y-14 sm:grid-cols-2 lg:grid-cols-4">
           {glance.stats.map((stat) => (

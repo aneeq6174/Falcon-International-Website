@@ -145,11 +145,11 @@ export function S13Contact() {
         gsap.to(strands, {
           strokeDashoffset: 0,
           ease: 'power1.inOut',
-          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, onEnter: guaranteeReveal },
           duration: 0.9,
         });
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, onEnter: guaranteeReveal },
         });
         tl.to(glyph, { opacity: 1, scale: 1, duration: 0.6, ease: 'power2.out' }, 0)
           .to(panel, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 0.35);

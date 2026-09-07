@@ -20,6 +20,11 @@
  * Hidden while the preloader is up, so it does not float over the intro. It
  * fades in once, and never animates again — a permanently pulsing button is the
  * kind of thing §9 warns about.
+ *
+ * It sits ABOVE the back-to-top button in the bottom-right stack, because it is
+ * the one of the two that starts a conversation. The offsets here and in
+ * BackToTop are the only thing keeping them from overlapping, so change them
+ * together.
  */
 
 import { useEffect, useState } from 'react';
@@ -44,7 +49,7 @@ export function WhatsAppButton() {
       rel="noopener noreferrer"
       aria-label={`${whatsapp.label} — ${org.whatsappDisplay}`}
       data-whatsapp
-      className={`group fixed bottom-5 right-5 z-[150] flex h-14 w-14 items-center justify-center rounded-full bg-red shadow-lg shadow-navy/30 transition-[opacity,transform] duration-300 hover:scale-105 focus-visible:scale-105 md:bottom-7 md:right-7 md:h-16 md:w-16 ${
+      className={`group fixed bottom-[4.75rem] right-5 z-[150] flex h-14 w-14 items-center justify-center rounded-full bg-red shadow-lg shadow-navy/30 transition-[opacity,transform] duration-300 hover:scale-105 focus-visible:scale-105 md:bottom-[5.75rem] md:right-7 md:h-16 md:w-16 ${
         ready ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-3 opacity-0'
       }`}
     >

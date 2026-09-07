@@ -589,15 +589,24 @@ export const SEGMENTS: LineSegment[] = [
     entryX: 0.5,
     exitX: 0.5,
     becomes: 'Flattens into rails carrying logos',
-    // Three horizontal rails, joined by elbows.
+    /*
+     * The descent used to run down the centre from y=0 to y=0.26 and then cut
+     * left along y=0.26. Measured, the header block occupies y 0.18-0.43 at
+     * x 0.09-0.72 — so BOTH of those went straight through the headline, which
+     * read as a line scribbled over the text rather than threaded behind it.
+     *
+     * It now steps out to the left gutter inside the section's top padding,
+     * above the heading entirely, and only comes back across at y=0.5, which is
+     * the logo rail it is supposed to be carrying.
+     */
     nodes: [
       p(0.5, 0),
-      p(0.5, 0.26),
-      p(0.02, 0.26),
+      p(0.5, 0.1),
+      p(0.02, 0.1),
       p(0.02, 0.5),
       p(0.98, 0.5),
-      p(0.98, 0.74),
-      p(0.5, 0.74),
+      p(0.98, 0.78),
+      p(0.5, 0.78),
       p(0.5, 1),
     ],
   },
@@ -613,16 +622,23 @@ export const SEGMENTS: LineSegment[] = [
     id: 'quality',
     entryX: 0.5,
     exitX: 0.5,
-    becomes: 'A checkmark path through certifications',
-    // The V between y=0.26 and y=0.18 is the checkmark; the line then descends
-    // on the right.
+    becomes: 'A clean route down the outside of the certifications',
+    /*
+     * This was a checkmark: three short diagonals between y 0.18 and 0.42. It
+     * did not read as one. Each leg was under 200px while the corner radius is
+     * a fixed 32px, so the rounding ate most of every segment and what rendered
+     * was a wobble — and it sat on x 0.42-0.72, y 0.18-0.42, directly over the
+     * measured intro paragraph at x 0.09-0.63, y 0.26-0.38.
+     *
+     * A shape that needs explaining is not working. This is the same clean
+     * gutter route the project index uses, which is the one on this page that
+     * reads correctly.
+     */
     nodes: [
       p(0.5, 0),
-      p(0.5, 0.26),
-      p(0.42, 0.42),
-      p(0.64, 0.18),
-      p(0.72, 0.26),
-      p(0.72, 0.88),
+      p(0.5, 0.1),
+      p(0.04, 0.1),
+      p(0.04, 0.88),
       p(0.5, 0.88),
       p(0.5, 1),
     ],

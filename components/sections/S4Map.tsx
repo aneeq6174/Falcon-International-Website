@@ -86,7 +86,7 @@ export function S4Map() {
         gsap.to(strands, {
           strokeDashoffset: 0,
           ease: 'power1.inOut',
-          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, onEnter: guaranteeReveal },
           duration: 0.9,
         });
 
@@ -94,7 +94,7 @@ export function S4Map() {
         resetCounters(counters);
 
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: mapRoot, start: ITEM_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: mapRoot, start: ITEM_REVEAL_START, onEnter: guaranteeReveal },
         });
         buildScene(tl, mapRoot, 0, 0.7);
         tl.to(hq, { scale: 1, opacity: 1, duration: 0.4, ease: 'power2.out' }, 0.5)

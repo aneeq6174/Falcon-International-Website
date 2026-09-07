@@ -84,11 +84,11 @@ export function S12Safety() {
         gsap.to(strands, {
           strokeDashoffset: 0,
           ease: 'power1.inOut',
-          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: SECTION_REVEAL_START, onEnter: guaranteeReveal },
           duration: 0.9,
         });
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: root, start: 'top 55%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: 'top 55%', onEnter: guaranteeReveal },
         });
         counters.forEach((c) => tl.add(countTween(c, 1.4), 0));
         tl.to(points, { opacity: 1, y: 0, duration: 0.4, stagger: 0.4 }, 1.5);

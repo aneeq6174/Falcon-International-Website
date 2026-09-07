@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Archivo, Inter } from 'next/font/google';
 import { S0Preloader } from '@/components/sections/S0Preloader';
 import { Nav } from '@/components/ui/Nav';
+import { BackToTop } from '@/components/ui/BackToTop';
 import { WhatsAppButton } from '@/components/ui/WhatsAppButton';
 import { meta, nav, org } from '@/content/site';
 import './globals.css';
@@ -69,8 +70,14 @@ export const viewport: Viewport = {
 };
 
 /**
- * Organization + LocalBusiness, per brief §6. Emitted server-side so it is in
- * the static export's HTML rather than injected at runtime.
+ * Organization + LocalBusiness + WebSite. Emitted server-side so it is in the
+ * HTML a crawler receives rather than injected at runtime.
+ *
+ * `alternateName` is what makes a search for the bare company name resolve to
+ * this site: people type "Falcon International Lahore" or "Falcon Intl", and an
+ * exact-string match on `name` alone does not cover those. `sameAs` is where
+ * verified social or directory profiles go — Google leans on it heavily for
+ * brand queries, and the client has not supplied any yet.
  */
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -79,6 +86,11 @@ const jsonLd = {
       '@type': 'Organization',
       '@id': `${org.url}/#organization`,
       name: org.name,
+      alternateName: [
+        'Falcon International Pakistan',
+        'Falcon International Lahore',
+        'Falcon Intl',
+      ],
       url: org.url,
       logo: `${org.url}/assets/falcon-logo.png`,
       description: meta.description,
@@ -93,11 +105,22 @@ const jsonLd = {
       },
     },
     {
+      '@type': 'WebSite',
+      '@id': `${org.url}/#website`,
+      name: org.name,
+      alternateName: 'Falcon International Pakistan',
+      url: org.url,
+      inLanguage: 'en-PK',
+      publisher: { '@id': `${org.url}/#organization` },
+    },
+    {
       '@type': 'LocalBusiness',
       '@id': `${org.url}/#localbusiness`,
       name: org.name,
+      alternateName: 'Falcon International Pakistan',
       image: `${org.url}/assets/falcon-logo.png`,
       url: org.url,
+      parentOrganization: { '@id': `${org.url}/#organization` },
       description: meta.description,
       foundingDate: org.foundedISO,
       telephone: org.phones,
@@ -158,8 +181,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </a>
         <S0Preloader />
         <Nav />
-        <main id="main">{children}</main>
+        <main id="main" tabIndex={-1} className="outline-none">
+          {children}
+        </main>
         <WhatsAppButton />
+        <BackToTop />
       </body>
     </html>
   );

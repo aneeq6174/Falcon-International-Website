@@ -268,27 +268,60 @@ export function resetCounters(counters: Counter[]) {
 /**
  * Failsafe for a reveal that never gets to run.
  *
- * Every reveal on this page starts its content at `opacity: 0` and animates it
- * in, which means the animation is load-bearing: if it does not run, the content
- * is not merely un-animated, it is INVISIBLE. GSAP drives tweens off
+ * Every reveal starts its content at `opacity: 0` and animates it in, which
+ * makes the animation load-bearing: if it does not run, the content is not
+ * merely un-animated, it is INVISIBLE. GSAP drives tweens off
  * requestAnimationFrame, and rAF can be starved — a background tab, an occluded
- * window, a device under load. Left alone, a reader can arrive at a section that
- * simply is not there. That is unacceptable for a contact form.
+ * window, a device under load. A reader can otherwise arrive at a section that
+ * simply is not there, which is unacceptable for a contact form.
  *
- * `setTimeout` does not depend on rAF. It is throttled in a background tab, but
- * it still fires, so this guarantees the finished state arrives no matter what
- * happens to the frame loop. In the normal case the animation has long since
- * completed and this does nothing.
+ * `setTimeout` does not depend on rAF. It is throttled in a background tab but
+ * still fires, so this guarantees the finished state whatever happens to the
+ * frame loop. In the normal case the animation completed long ago and this does
+ * nothing.
  *
- * Attach as a ScrollTrigger's `onEnter`.
+ * Attach as a ScrollTrigger's `onEnter`. Safe to fire more than once.
  */
 export function guaranteeReveal(self: { animation?: gsap.core.Animation | null }): void {
   const anim = self.animation;
   if (!anim) return;
   setTimeout(() => {
-    if (anim.progress() < 1) anim.progress(1);
+    // The scene may have been reverted between the trigger firing and this
+    // running — a breakpoint change, a rebuild, a navigation. Never let the
+    // failsafe become the failure.
+    try {
+      if (anim.progress() < 1) anim.progress(1);
+    } catch {
+      /* the animation is gone; there is nothing left to guarantee */
+    }
   }, 2500);
 }
+
+/**
+ * ── Why no reveal uses `once: true` ───────────────────────────────────────
+ *
+ * It looks like exactly the right flag: play once, then stop caring. It is not,
+ * and it took a crash to find out.
+ *
+ * GSAP implements `once` by calling `self.kill()` from inside the toggle
+ * (ScrollTrigger.js:1772), and `kill()` splices the trigger out of the shared
+ * `_triggers` array (:1890). Meanwhile `refresh()` walks that same array by
+ * index and reads `_triggers[i].end` WITHOUT a bounds guard (:1365 — note the
+ * neighbouring read at :1406 does guard it with `|| {}`). So a refresh that
+ * activates several `once` triggers at the same moment shrinks the array
+ * underneath its own loop and reads past the end:
+ *
+ *     TypeError: Cannot read properties of undefined (reading 'end')
+ *
+ * Which is precisely what a nav link does: the hash jump lands the reader deep
+ * in the page, past a dozen triggers at once, and the refresh that follows
+ * fires them all together.
+ *
+ * GSAP's DEFAULT `toggleActions` — "play none none none" — already does what we
+ * want: play on first enter, never reverse, never replay backwards. Nothing is
+ * killed, so nothing mutates the array mid-refresh. Do not add `once: true`.
+ */
+
 
 /**
  * Where a reveal fires.

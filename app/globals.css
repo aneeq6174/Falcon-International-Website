@@ -29,7 +29,25 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
-    scroll-behavior: auto; /* Jumping the reader is never smoothed. */
+    /*
+     * Jumping between sections instantly is disorienting — the page appears to
+     * flip and the reader has to work out where they landed. Smooth scrolling
+     * carries them there, so the movement itself says which direction they
+     * went and how far. The reduced-motion block at the bottom of this file
+     * turns it back off for readers who have asked for less movement.
+     */
+    scroll-behavior: smooth;
+  }
+
+  /*
+   * The nav is fixed and 4rem tall, so an anchor landing flush with the
+   * viewport top puts the section's heading underneath it. This is the
+   * clearance, and it applies to a native hash jump as well as a smooth one.
+   */
+  :target,
+  section[id],
+  [id][data-scroll-anchor] {
+    scroll-margin-top: 5.5rem;
   }
 
   body {

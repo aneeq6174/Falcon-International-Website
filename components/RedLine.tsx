@@ -186,7 +186,6 @@ export function RedLine({
           scrollTrigger: {
             trigger: sceneRef.current,
             start: SECTION_REVEAL_START,
-            once: true,
             onEnter: guaranteeReveal,
           },
         });

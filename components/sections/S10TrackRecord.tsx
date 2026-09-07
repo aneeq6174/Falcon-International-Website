@@ -46,7 +46,6 @@ export function S10TrackRecord() {
           scrollTrigger: {
             trigger: root,
             start: SECTION_REVEAL_START,
-            once: true,
             onEnter: guaranteeReveal,
           },
         },

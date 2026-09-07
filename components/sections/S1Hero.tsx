@@ -93,7 +93,7 @@ export function S1Hero() {
 
         /* One build on entry, at every width. Nothing pins, nothing scrubs. */
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: rootRef.current, start: 'top 75%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: rootRef.current, start: 'top 75%', onEnter: guaranteeReveal },
         });
 
         drawables.forEach(({ paths }, i) => {

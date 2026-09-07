@@ -75,6 +75,7 @@ export const nav = {
   logoAlt: 'Falcon International',
   cta: 'Start a project',
   menuLabel: 'Menu',
+  backToTop: 'Back to top',
   /**
    * Root-relative, because the nav renders on the detail pages too — a bare
    * "#journey" there looks for a journey section on that page and does nothing.
@@ -85,7 +86,7 @@ export const nav = {
     { label: 'Journey', href: '/#journey' },
     { label: 'Capabilities', href: '/capabilities/' },
     { label: 'Clients', href: '/#clients' },
-    { label: 'Track record', href: '/track-record/' },
+    { label: 'Our Projects', href: '/track-record/' },
     { label: 'Safety', href: '/#safety' },
     { label: 'Contact', href: '/#contact' },
   ],
@@ -377,7 +378,7 @@ export const leadership = {
       name: 'Aneeq Ur Rehman Ijaz',
       role: 'Chief Digital Officer · IT & Automation',
       experience: '3 years in IT & automation',
-      credentials: 'BS Computer Science',
+      credentials: 'BS Computer Science · LLB',
       body: 'Drives digitalisation, systems automation and IT infrastructure.',
       portrait: {
         caption: '[PORTRAIT — Aneeq Ur Rehman Ijaz, CDO, 1:1]',

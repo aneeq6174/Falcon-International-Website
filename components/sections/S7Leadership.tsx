@@ -49,7 +49,7 @@ export function S7Leadership() {
         gsap.to(cover, {
           scaleY: 0,
           ease: 'none',
-          scrollTrigger: { trigger: cover, start: ITEM_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: cover, start: ITEM_REVEAL_START, onEnter: guaranteeReveal },
         });
       }
 
@@ -61,7 +61,7 @@ export function S7Leadership() {
           filter: 'blur(0px)',
           duration: 0.8,
           ease: 'power4.out',
-          scrollTrigger: { trigger: quote, start: ITEM_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: quote, start: ITEM_REVEAL_START, onEnter: guaranteeReveal },
         });
       }
 
@@ -73,7 +73,7 @@ export function S7Leadership() {
           duration: 0.6,
           ease: 'power2.out',
           stagger: 0.1,
-          scrollTrigger: { trigger: root, start: 'top 55%', once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: root, start: 'top 55%', onEnter: guaranteeReveal },
         });
       }
     },
@@ -95,9 +95,9 @@ export function S7Leadership() {
       <RedLine id="leadership" />
 
       <SectionBody className="flex flex-col gap-20">
-        <Eyebrow as="h2" id="leadership-heading">
+        <h2 id="leadership-heading" className="text-h2 uppercase text-navy">
           {leadership.eyebrow}
-        </Eyebrow>
+        </h2>
 
         {/* Founder */}
         <div className="grid gap-10 md:grid-cols-[minmax(0,20rem)_1fr] lg:gap-16">

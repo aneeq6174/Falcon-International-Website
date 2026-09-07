@@ -31,15 +31,16 @@ export function DetailPage({
     <>
       {/* pt-32 clears the fixed nav, which is 4rem tall. */}
       <header className="relative isolate overflow-hidden bg-navy pb-16 pt-32 text-white md:pb-20 md:pt-40">
-        <div className="shell flex flex-col gap-5">
+        <div className="shell flex flex-col gap-10">
           {/* The nav mark above already goes home; this is the orientation
               crumb, so it says where you are going rather than repeating the
               company name back at the reader. */}
           <a
             href="/"
-            className="eyebrow w-max text-white/50 transition-colors hover:text-red"
+            className="inline-flex w-max items-center gap-2 rounded-sm border border-white/20 bg-white/5 px-4 py-2.5 font-display text-xs font-semibold uppercase tracking-widest text-white/80 transition-colors duration-200 hover:border-red hover:bg-red hover:text-white"
           >
-            ← Home
+            <span aria-hidden="true">←</span>
+            Home
           </a>
 
           <div className="flex flex-col gap-4">

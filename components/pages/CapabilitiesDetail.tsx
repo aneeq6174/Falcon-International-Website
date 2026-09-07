@@ -43,7 +43,7 @@ export function CapabilitiesDetail() {
 
       panels.forEach((panel) => {
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: panel, start: ITEM_REVEAL_START, once: true, onEnter: guaranteeReveal },
+          scrollTrigger: { trigger: panel, start: ITEM_REVEAL_START, onEnter: guaranteeReveal },
         });
         buildScene(tl, panel, 0, 0.5);
         counters
